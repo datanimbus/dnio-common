@@ -106,7 +106,7 @@ async function initCodeGen(req, res, next) {
 
 async function preHookValidation(req, res, next) {
     try {
-        let promises = req.body.body.map(item => require(path.join(item.dataService.folderPath, 'pre-hook.json'))(req, item));
+        let promises = req.body.body.map(item => require(path.join(item.dataService.folderPath, 'pre-hook.js'))(req, item));
         promises = await Promise.all(promises);
         req.body.body = promises;
         promises = null;
@@ -129,9 +129,8 @@ async function schemaValidation(req, res, next) {
             if (!schemaValidator.validate(require(path.join(item.dataService.folderPath, 'schema.json')), item.data)) {
                 delete item.oldData;
                 errors.push({ item, errors: schemaValidator.errors });
-            } else {
-                return item;
             }
+            return item;
         });
         promises = await Promise.all(promises);
         if (errors && errors.length > 0) {
@@ -146,9 +145,11 @@ async function schemaValidation(req, res, next) {
 
 async function specialFieldsValidation(req, res, next) {
     try {
-        let promises = req.body.body.map(item => require(path.join(item.dataService.folderPath, 'pre-validation.json'))(req, item.data, item.oldData));
+        let promises = req.body.body.map(item => require(path.join(item.dataService.folderPath, 'pre-validation.js'))(req, item.data, item.oldData));
         promises = await Promise.all(promises);
-        req.body.body = promises;
+        if (!_.isEmpty(promises.filter(e => e))) {
+            return res.status(400).json({ message: 'Validation Error', errors: promises });
+        }
         promises = null;
         next();
     } catch (err) {

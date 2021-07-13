@@ -6,11 +6,12 @@ function genrateCode(data) {
 		schema = JSON.parse(schema);
 	}
 	const code = [];
+	code.push('const { MongoClient } = require(\'mongodb\');');
 	code.push('const log4js = require(\'log4js\');');
 	code.push('const _ = require(\'lodash\');');
 	code.push('');
 	code.push('const config = require(\'../../config\');');
-	code.push('const commonUtils = require(\'./common.utils\');');
+	code.push('const commonUtils = require(\'../../utils/common.utils\');');
 	code.push('');
 	code.push('const logger = log4js.getLogger(global.loggerName);');
 
@@ -21,11 +22,20 @@ function genrateCode(data) {
 	code.push(' * @param {*} oldData The Old Document Object');
 	code.push(' * @returns {Promise<object>} Returns Promise of null if no validation error, else and error object with invalid paths');
 	code.push(' */');
-	code.push('async function validateUnique(req, db, session, newData, oldData) {');
+	code.push('async function validateUnique(req, newData, oldData) {');
 	code.push('\tconst errors = {};');
+	code.push('\tconst client = await MongoClient.connect(config.mongoDataUrl, config.mongoDataOptions);');
+	code.push(`\tconst col = client.db(config.namespace + '-${data.app}').collection('${data.collectionName}');`);
 	code.push('\tlet val;');
+	code.push('\ttry {');
 	parseSchemaForUnique(schema);
-	code.push('\treturn Object.keys(errors).length > 0 ? errors : null;');
+	code.push('\t} catch(err) {');
+	code.push('\t\tlogger.error(\'validateUnique\', err);');
+	code.push('\t\terrors[\'global\'] = err;');
+	code.push('\t} finally {');
+	code.push('\t\tclient.close(true);');
+	code.push('\t\treturn Object.keys(errors).length > 0 ? errors : null;');
+	code.push('\t}');
 	code.push('}');
 	code.push('');
 
@@ -39,19 +49,6 @@ function genrateCode(data) {
 	code.push('async function encryptSecureFields(req, newData, oldData) {');
 	code.push('\tconst errors = {};');
 	parseSchemaForEncryption(schema);
-	code.push('\treturn Object.keys(errors).length > 0 ? errors : null;');
-	code.push('}');
-	code.push('');
-	/**------------------------ SECURE FIELD DECRYPT ----------------------- */
-	code.push('/**');
-	code.push(' * @param {*} req The Incomming Request Object');
-	code.push(' * @param {*} newData The New Document Object');
-	code.push(' * @param {*} oldData The Old Document Object');
-	code.push(' * @returns {Promise<object>} Returns Promise of null if no validation error, else and error object with invalid paths');
-	code.push(' */');
-	code.push('async function decryptSecureFields(req, newData, oldData) {');
-	code.push('\tconst errors = {};');
-	parseSchemaForDecryption(schema);
 	code.push('\treturn Object.keys(errors).length > 0 ? errors : null;');
 	code.push('}');
 	code.push('');
@@ -103,12 +100,19 @@ function genrateCode(data) {
 	/**------------------------ EXPORTS ----------------------- */
 
 	/**------------------------ METHODS ----------------------- */
-	code.push('module.exports.validateUnique = validateUnique;');
-	code.push('module.exports.encryptSecureFields = encryptSecureFields;');
-	code.push('module.exports.decryptSecureFields = decryptSecureFields;');
-	code.push('module.exports.fixBoolean = fixBoolean;');
-	code.push('module.exports.enrichGeojson = enrichGeojson;');
-	code.push('module.exports.validateDateFields = validateDateFields;');
+	code.push('module.exports = async function(req, newData, oldData) {');
+	code.push('\tlet errors = {};');
+	code.push('\terrors = await validateUnique(req, newData, oldData);');
+	code.push('\tif (errors && Object.keys(errors).length > 0) return errors;');
+	code.push('\terrors = await encryptSecureFields(req, newData, oldData);');
+	code.push('\tif (errors && Object.keys(errors).length > 0) return errors;');
+	code.push('\terrors = await fixBoolean(req, newData, oldData);');
+	code.push('\tif (errors && Object.keys(errors).length > 0) return errors;');
+	code.push('\terrors = await enrichGeojson(req, newData, oldData);');
+	code.push('\tif (errors && Object.keys(errors).length > 0) return errors;');
+	code.push('\terrors = await validateDateFields(req, newData, oldData);');
+	code.push('\tif (errors && Object.keys(errors).length > 0) return errors;');
+	code.push('};');
 
 
 	return code.join('\n');
@@ -136,7 +140,7 @@ function genrateCode(data) {
 						code.push('\tif (val) {');
 						code.push(`\t\tlet query = { '${path}': val };`);
 						code.push('\t\tif(oldData) query[\'_id\'] = {\'$ne\': oldData._id};');
-						code.push('\t\tconst doc = await db.find(query, { session }).collation({ locale: \'en\', strength: 2 }).toArray();');
+						code.push('\t\tconst doc = await col.find(query, { session }).collation({ locale: \'en\', strength: 2 }).toArray();');
 						code.push('\t\tif (doc && doc.length > 0) {');
 						code.push(`\t\t\terrors['${path}'] = '${path} field should be unique';`);
 						code.push('\t\t}');
@@ -194,67 +198,6 @@ function genrateCode(data) {
 						code.push(`\t\tlet promises = ${_.camelCase(path)}New.map(async (newData, i) => {`);
 						code.push(`\t\t\tlet oldData = _.find(${_.camelCase(path)}Old, newData);`);
 						parseSchemaForEncryption(def.definition[0].definition, '');
-						code.push('\t\t});');
-						code.push('\t\tpromises = await Promise.all(promises);');
-						code.push('\t\tpromises = null;');
-						code.push('\t}');
-					}
-				}
-			}
-		});
-	}
-
-	function parseSchemaForDecryption(schema, parentKey) {
-		schema.forEach(def => {
-			let key = def.key;
-			const path = parentKey ? parentKey + '.' + key : key;
-			if (key != '_id' && def.properties) {
-				if (def.properties.password && def.type != 'Array') {
-					code.push(`\tlet ${_.camelCase(path + '.value')} = _.get(newData, '${path}.value')`);
-					code.push(`\tif (${_.camelCase(path + '.value')}) {`);
-					code.push('\t\ttry {');
-					code.push(`\t\t\tconst doc = await commonUtils.decryptText(req, ${_.camelCase(path + '.value')});`);
-					code.push('\t\t\tif (doc) {');
-					code.push('\t\t\t\tif(req.query && req.query.forFile) {');
-					code.push(`\t\t\t\t\t_.set(newData, '${path}', doc);`);
-					code.push('\t\t\t\t} else {');
-					code.push(`\t\t\t\t\t_.set(newData, '${path}.value', doc);`);
-					code.push('\t\t\t\t}');
-					code.push('\t\t\t}');
-					code.push('\t\t} catch (e) {');
-					code.push(`\t\t\terrors['${path}'] = e.message ? e.message : e;`);
-					code.push('\t\t}');
-					code.push('\t}');
-				} else if (def.type == 'Object') {
-					parseSchemaForDecryption(def.definition, path);
-				} else if (def.type == 'Array') {
-					if (def.definition[0].properties.password) {
-						code.push(`\tlet ${_.camelCase(path)} = _.get(newData, '${path}') || [];`);
-						code.push(`\tif (${_.camelCase(path)} && Array.isArray(${_.camelCase(path)}) && ${_.camelCase(path)}.length > 0) {`);
-						code.push(`\t\tlet promises = ${_.camelCase(path)}.map(async (item, i) => {`);
-						code.push('\t\t\ttry {');
-						code.push('\t\t\t\tif (item && item.value) {');
-						code.push('\t\t\t\t\tconst doc = await commonUtils.decryptText(req, item.value);');
-						code.push('\t\t\t\t\tif (doc) {');
-						code.push('\t\t\t\t\t\tif (req.query && req.query.forFile) {');
-						code.push('\t\t\t\t\t\t\titem = doc;');
-						code.push('\t\t\t\t\t\t} else {');
-						code.push('\t\t\t\t\t\t\titem.value = doc;');
-						code.push('\t\t\t\t\t\t}');
-						code.push('\t\t\t\t\t}');
-						code.push('\t\t\t\t}');
-						code.push('\t\t\t} catch (e) {');
-						code.push(`\t\t\t\terrors['${path}.' + i] = e.message ? e.message : e;`);
-						code.push('\t\t\t}');
-						code.push('\t\t});');
-						code.push('\t\tpromises = await Promise.all(promises);');
-						code.push('\t\tpromises = null;');
-						code.push('\t}');
-					} else if (def.definition[0].type == 'Object') {
-						code.push(`\tlet ${_.camelCase(path)} = _.get(newData, '${path}') || [];`);
-						code.push(`\tif (${_.camelCase(path)} && Array.isArray(${_.camelCase(path)}) && ${_.camelCase(path)}.length > 0) {`);
-						code.push(`\t\tlet promises = ${_.camelCase(path)}.map(async (item, i) => {`);
-						parseSchemaForDecryption(def.definition[0].definition, '');
 						code.push('\t\t});');
 						code.push('\t\tpromises = await Promise.all(promises);');
 						code.push('\t\tpromises = null;');
