@@ -6,9 +6,9 @@ const log4js = require('log4js');;
 const config = require('../../config');
 const schemaUtils = require('../schema.utils');
 const preValidationCode = require('./pre-validation.code');
-const preHookCode = require('./pre-hook.code');
-const postHookCode = require('./post-hook.code');
-const transValidationCode = require('./trans-validation.code');
+// const preHookCode = require('./pre-hook.code');
+// const postHookCode = require('./post-hook.code');
+// const transValidationCode = require('./trans-validation.code');
 
 const logger = log4js.getLogger(global.loggerName);
 
@@ -27,9 +27,9 @@ function generateCode(srvc) {
     logger.info('New Version :: Generating Code');
     mkdirp.sync(serviceFolder);
     fs.writeFileSync(path.join(serviceFolder, 'schema.json'), JSON.stringify(schemaUtils.convertToJSONSchema(srvc.definition), null, 2));
-    fs.writeFileSync(path.join(serviceFolder, 'pre-hook.js'), preHookCode.genrateCode(srvc));
+    // fs.writeFileSync(path.join(serviceFolder, 'pre-hook.js'), preHookCode.genrateCode(srvc));
     fs.writeFileSync(path.join(serviceFolder, 'pre-validation.js'), preValidationCode.genrateCode(srvc));
-    fs.writeFileSync(path.join(serviceFolder, 'post-hook.js'), postHookCode.genrateCode(srvc));
+    // fs.writeFileSync(path.join(serviceFolder, 'post-hook.js'), postHookCode.genrateCode(srvc));
 }
 
 

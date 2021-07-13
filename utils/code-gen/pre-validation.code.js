@@ -10,7 +10,6 @@ function genrateCode(data) {
 	code.push('const _ = require(\'lodash\');');
 	code.push('');
 	code.push('const config = require(\'../../config\');');
-	code.push('const httpClient = require(\'../../http-client\');');
 	code.push('const commonUtils = require(\'./common.utils\');');
 	code.push('');
 	code.push('const logger = log4js.getLogger(global.loggerName);');
@@ -22,8 +21,7 @@ function genrateCode(data) {
 	code.push(' * @param {*} oldData The Old Document Object');
 	code.push(' * @returns {Promise<object>} Returns Promise of null if no validation error, else and error object with invalid paths');
 	code.push(' */');
-	code.push('async function validateUnique(req, newData, oldData) {');
-	code.push('\tconst model = mongoose.model(config.serviceId);');
+	code.push('async function validateUnique(req, db, session, newData, oldData) {');
 	code.push('\tconst errors = {};');
 	code.push('\tlet val;');
 	parseSchemaForUnique(schema);
@@ -138,7 +136,7 @@ function genrateCode(data) {
 						code.push('\tif (val) {');
 						code.push(`\t\tlet query = { '${path}': val };`);
 						code.push('\t\tif(oldData) query[\'_id\'] = {\'$ne\': oldData._id};');
-						code.push('\t\tconst doc = await model.find(query).collation({ locale: \'en\', strength: 2 }).lean();');
+						code.push('\t\tconst doc = await db.find(query, { session }).collation({ locale: \'en\', strength: 2 }).toArray();');
 						code.push('\t\tif (doc && doc.length > 0) {');
 						code.push(`\t\t\terrors['${path}'] = '${path} field should be unique';`);
 						code.push('\t\t}');

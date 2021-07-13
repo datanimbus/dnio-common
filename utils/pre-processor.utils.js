@@ -1,5 +1,6 @@
-
+const path = require('path');
 const log4js = require('log4js');
+const AJV = require('ajv');
 const _ = require('lodash');
 
 const roleModel = require('../models/role.model');
@@ -7,6 +8,7 @@ const dataServiceModel = require('../models/data-service.model');
 const codeGen = require('./code-gen');
 
 const logger = log4js.getLogger(global.loggerName);
+const schemaValidator = new AJV();
 
 
 async function basicValidation(req, res, next) {
@@ -102,9 +104,65 @@ async function initCodeGen(req, res, next) {
     }
 }
 
+async function preHookValidation(req, res, next) {
+    try {
+        let promises = req.body.body.map(item => require(path.join(item.dataService.folderPath, 'pre-hook.json'))(req, item));
+        promises = await Promise.all(promises);
+        req.body.body = promises;
+        promises = null;
+        next();
+    } catch (err) {
+        logger.error('initCodeGen :: ', err);
+        res.status(500).json({ message: err.message });
+    }
+}
+
+async function schemaValidation(req, res, next) {
+    try {
+        const errors = [];
+        let promises = req.body.body.map(async (item) => {
+            item.app = req.body.app;
+            const temp = await dataServiceModel.patchOldRecord(item);
+            if (temp.oldData) {
+                item.data = _.merge(temp.oldData, item.data);
+            }
+            if (!schemaValidator.validate(require(path.join(item.dataService.folderPath, 'schema.json')), item.data)) {
+                delete item.oldData;
+                errors.push({ item, errors: schemaValidator.errors });
+            } else {
+                return item;
+            }
+        });
+        promises = await Promise.all(promises);
+        if (errors && errors.length > 0) {
+            return res.status(400).json({ errors, message: 'Schema Validation Failed' });
+        }
+        next();
+    } catch (err) {
+        logger.error('initCodeGen :: ', err);
+        res.status(500).json({ message: err.message });
+    }
+}
+
+async function specialFieldsValidation(req, res, next) {
+    try {
+        let promises = req.body.body.map(item => require(path.join(item.dataService.folderPath, 'pre-validation.json'))(req, item.data, item.oldData));
+        promises = await Promise.all(promises);
+        req.body.body = promises;
+        promises = null;
+        next();
+    } catch (err) {
+        logger.error('initCodeGen :: ', err);
+        res.status(500).json({ message: err.message });
+    }
+}
+
 
 module.exports = {
     basicValidation,
     initCodeGen,
-    canDoTransaction
+    canDoTransaction,
+    preHookValidation,
+    schemaValidation,
+    specialFieldsValidation
 };

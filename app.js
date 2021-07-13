@@ -10,18 +10,17 @@ const express = require('express');
 
 const config = require('./config');
 const dbFactory = require('./db-factory');
-const preProcessor = require('./utils/pre-processor.utils');
 
+const LOGGER_NAME = config.isK8sEnv() ? `[${config.hostname}] [COMMON v${config.imageTag}]` : `[COMMON v${config.imageTag}]`
+const logger = log4js.getLogger(LOGGER_NAME);
+logger.level = process.env.LOG_LEVEL || 'info';
+
+// global.logger = logger;
 
 const app = express();
-const logger = log4js.getLogger(global.loggerName);
 
 app.use(express.json({ inflate: true }));
 app.use(express.urlencoded({ extended: true }));
-
-app.use(preProcessor.basicValidation);
-app.use(preProcessor.canDoTransaction);
-app.use(preProcessor.initCodeGen);
 
 app.use('/api/common', require('./routes'));
 

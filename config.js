@@ -27,8 +27,6 @@ e.streamingConfig = {
     url: process.env.STREAMING_HOST || 'nats://localhost:4222',
     user: process.env.STREAMING_USER || '',
     pass: process.env.STREAMING_PASS || '',
-    // maxReconnectAttempts: process.env.STREAMING_RECONN_ATTEMPTS || 500,
-    // reconnectTimeWait: process.env.STREAMING_RECONN_TIMEWAIT_MILLI || 500
     maxReconnectAttempts: process.env.STREAMING_RECONN_ATTEMPTS || 500,
     connectTimeout: 2000,
     stanMaxPingOut: process.env.STREAMING_RECONN_TIMEWAIT_MILLI || 500
@@ -37,13 +35,11 @@ e.mongoAuthorOptions = {
     useUnifiedTopology: true,
     useNewUrlParser: true,
     minSize: process.env.MONGO_CONNECTION_POOL_SIZE || 5,
-    dbName: process.env.MONGO_AUTHOR_DBNAME || 'datastackConfig',
 };
 e.mongoDataOptions = {
     useUnifiedTopology: true,
     useNewUrlParser: true,
     minSize: process.env.MONGO_CONNECTION_POOL_SIZE || 5,
-    dbName: process.env.DATA_STACK_NAMESPACE + '-' + process.env.DATA_STACK_APP
 };
 e.mongoLogsOptions = {
     useUnifiedTopology: true,
