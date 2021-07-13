@@ -19,6 +19,7 @@ const logger = log4js.getLogger(global.loggerName);
 app.use(express.json({ inflate: true }));
 app.use(express.urlencoded({ extended: true }));
 
+app.use(preProcessor.basicValidation);
 app.use(preProcessor.canDoTransaction);
 app.use(preProcessor.initCodeGen);
 
