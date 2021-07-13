@@ -14,6 +14,7 @@ function parseBoolean(val) {
 }
 e.port = process.env.PORT || 3000;
 e.httpsPort = process.env.HTTPS_PORT || 3443;
+e.imageTag = process.env.IMAGE_TAG || '1.0.0';
 e.hookConnectionTimeout = parseInt(process.env.HOOK_CONNECTION_TIMEOUT) || 30;
 e.mongoDataUrl = process.env.MONGO_APPCENTER_URL || 'mongodb://localhost';
 e.authorDB = process.env.MONGO_AUTHOR_DBNAME || 'datastackConfig';
@@ -23,7 +24,7 @@ e.logsDB = process.env.MONGO_LOGS_DBNAME || 'datastackLogs';
 e.googleKey = process.env.GOOGLE_API_KEY || '';
 e.queueName = 'webHooks';
 e.streamingConfig = {
-    url: process.env.STREAMING_HOST || 'nats://127.0.0.1:4222',
+    url: process.env.STREAMING_HOST || 'nats://localhost:4222',
     user: process.env.STREAMING_USER || '',
     pass: process.env.STREAMING_PASS || '',
     // maxReconnectAttempts: process.env.STREAMING_RECONN_ATTEMPTS || 500,
