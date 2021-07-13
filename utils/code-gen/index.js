@@ -18,6 +18,7 @@ mkdirp.sync(generatedCodePath);
 
 function generateCode(srvc) {
     const serviceFolder = path.join(generatedCodePath, srvc._id + '_' + srvc.version);
+    srvc.folderPath = serviceFolder;
     if (fs.existsSync(serviceFolder)) {
         logger.info('Code Exists :: Skipping Code Generation');
         return null;
