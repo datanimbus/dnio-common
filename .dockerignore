@@ -1,0 +1,11 @@
+node_modules/
+dist/
+.env
+generatedCode
+Dockerfile
+.vscode
+scripts
+.gitignore
+common.yaml
+Jenkinsfile
+README.md
