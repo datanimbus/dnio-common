@@ -10,6 +10,15 @@ const codeGen = require('./code-gen');
 const logger = log4js.getLogger(global.loggerName);
 const schemaValidator = new AJV();
 
+async function patchUserData(req, res, next) {
+    try {
+        req.user = await roleModel.getUser(req);
+        next();
+    } catch (err) {
+        logger.error('basicValidation :: ', err);
+        res.status(500).json({ message: err.message });
+    }
+}
 
 async function basicValidation(req, res, next) {
     try {
@@ -49,11 +58,16 @@ async function canDoTransaction(req, res, next) {
                     let managePermission;
                     let workflowEnabled;
                     if (!cacheMap[data.dataService]) {
-                        cacheMap[data.dataService].managePermission = await roleModel.hasManagePermission(req, { _id: data.dataService });
+                        cacheMap[data.dataService] = {};
+                        if (!(req.user && req.user.isSuperAdmin)) {
+                            cacheMap[data.dataService].managePermission = await roleModel.hasManagePermission(req, { _id: data.dataService });
+                        } else {
+                            cacheMap[data.dataService].managePermission = true;
+                        }
                         cacheMap[data.dataService].workflowEnabled = await roleModel.isPreventedByWorkflow(req, { _id: data.dataService });
                     }
-                    managePermission = cacheMap[data.dataService].managePermission;
-                    workflowEnabled = cacheMap[data.dataService].workflowEnabled;
+                    managePermission = (cacheMap[data.dataService].managePermission || false);
+                    workflowEnabled = (cacheMap[data.dataService].workflowEnabled || false);
                     return {
                         dataService: data.dataService,
                         managePermission,
@@ -71,7 +85,7 @@ async function canDoTransaction(req, res, next) {
             if (!all.every(e => e.managePermission)) {
                 return res.status(400).json({ message: 'No manage permission in atleast one Data Service', errors: all });
             }
-            if (!all.includes(e => e.workflowEnabled)) {
+            if (all.includes(e => e.workflowEnabled)) {
                 return res.status(400).json({ message: 'Skip Review is required in one of the Data Service', errors: all });
             }
             next();
@@ -95,7 +109,7 @@ async function initCodeGen(req, res, next) {
         }
         const all = await Promise.all(services.map((srvc) => codeGen.generateCode(srvc)));
         const body = req.body.map(e => {
-            const srvc = services.find(s => s._id === e.dataService);
+            const srvc = all.find(s => s._id === e.dataService);
             e.dataService = srvc;
             return e;
         });
@@ -162,6 +176,7 @@ async function specialFieldsValidation(req, res, next) {
 }
 
 module.exports = {
+    patchUserData,
     basicValidation,
     initCodeGen,
     canDoTransaction,

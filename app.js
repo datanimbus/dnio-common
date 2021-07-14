@@ -10,6 +10,7 @@ const express = require('express');
 
 const config = require('./config');
 const dbFactory = require('./db-factory');
+const preProcessor = require('./utils/pre-processor.utils');
 
 const LOGGER_NAME = config.isK8sEnv() ? `[${config.hostname}] [COMMON v${config.imageTag}]` : `[COMMON v${config.imageTag}]`
 const logger = log4js.getLogger(LOGGER_NAME);
@@ -21,6 +22,8 @@ const app = express();
 
 app.use(express.json({ inflate: true }));
 app.use(express.urlencoded({ extended: true }));
+
+app.use(preProcessor.patchUserData);
 
 app.use('/api/common', require('./routes'));
 

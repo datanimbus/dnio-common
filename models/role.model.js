@@ -2,6 +2,25 @@ const log4js = require('log4js');
 
 const logger = log4js.getLogger(global.loggerName);
 
+
+async function getUser(req) {
+    try {
+        const userId = req.headers[global.userHeader];
+        if (!userId) {
+            logger.debug('UserID not found in request');
+            throw new Error('UserID not found in request');
+        }
+        const user = await global.authorDB.collection('userMgmt.users').findOne({ _id: userId });
+        if (!user) {
+            throw new Error('Invalid user in request');
+        }
+        return user;
+    } catch (err) {
+        logger.error('getUser', err);
+        throw err;
+    }
+}
+
 /**
 * @returns {Promise<string[]>} Returns Array of userIds
 */
@@ -22,7 +41,7 @@ async function getApproversList() {
             },
             { $unwind: '$groups' },
             { $unwind: '$groups.users' }
-        ]);
+        ]).toArray();
         if (records && records.length > 0) {
             return records.map(e => e.groups.users);
         }
@@ -43,7 +62,7 @@ async function isWorkflowEnabled(req, filter) {
             { $unwind: '$roles' },
             { $unwind: '$roles.operations' },
             { $match: { 'roles.operations.method': 'REVIEW' } }
-        ]);
+        ]).toArray();
         if (records && records.length > 1) {
             return true;
         }
@@ -79,7 +98,7 @@ async function hasSkipReview(req, filter) {
                 }
             },
             { $match: { 'groups.users': userId } },
-        ]);
+        ]).toArray();
         if (records && records.length > 1) {
             return true;
         }
@@ -100,7 +119,6 @@ async function hasManagePermission(req, filter) {
             logger.debug('UserID not found in request');
             throw new Error('UserID not found in request');
         }
-
         const records = await global.authorDB.collection('userMgmt.roles').aggregate([
             { $match: { _id: filter.serviceId } },
             { $unwind: '$roles' },
@@ -115,7 +133,7 @@ async function hasManagePermission(req, filter) {
                 }
             },
             { $match: { 'groups.users': userId } },
-        ]);
+        ]).toArray();
         if (records && records.length > 1) {
             return true;
         }
@@ -144,7 +162,7 @@ async function isPreventedByWorkflow(req, filter) {
             { $unwind: '$roles' },
             { $unwind: '$roles.operations' },
             { $match: { 'roles.operations.method': 'REVIEW' } }
-        ]);
+        ]).toArray();
         if (!records || records.length == 0) {
             return false;
         }
@@ -162,7 +180,7 @@ async function isPreventedByWorkflow(req, filter) {
                 }
             },
             { $match: { 'groups.users': userId } },
-        ]);
+        ]).toArray();
         if (records && records.length > 1) {
             return false;
         }
@@ -174,6 +192,7 @@ async function isPreventedByWorkflow(req, filter) {
 }
 
 module.exports = {
+    getUser,
     hasSkipReview,
     isWorkflowEnabled,
     getApproversList,

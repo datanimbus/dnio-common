@@ -21,7 +21,7 @@ function generateCode(srvc) {
     srvc.folderPath = serviceFolder;
     if (fs.existsSync(serviceFolder)) {
         logger.info('Code Exists :: Skipping Code Generation');
-        return null;
+        return srvc;
     }
     removeOldFolder(srvc);
     logger.info('New Version :: Generating Code');
@@ -30,6 +30,7 @@ function generateCode(srvc) {
     fs.writeFileSync(path.join(serviceFolder, 'pre-hook.js'), preHookCode.genrateCode(srvc));
     fs.writeFileSync(path.join(serviceFolder, 'pre-validation.js'), preValidationCode.genrateCode(srvc));
     // fs.writeFileSync(path.join(serviceFolder, 'post-hook.js'), postHookCode.genrateCode(srvc));
+    return srvc;
 }
 
 

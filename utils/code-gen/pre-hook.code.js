@@ -30,7 +30,7 @@ function genrateCode(data) {
 		(data.headers || []).forEach(item => {
 			code.push(`\theaders['${item.header}'] = '${item.value}'`);
 		});
-		code.push(`\tlet docId = newData._id || oldData._id || null;`);
+		code.push(`\tlet docId = newData._id || (oldData ? oldData._id : null) || null;`);
 		code.push(`\tlet payload;`);
 		code.push(`\tlet txnId = req.headers[global.txnIdHeader];`);
 		code.push(`\toptions['type'] = 'PreHook';`);
@@ -125,7 +125,9 @@ function genrateCode(data) {
 	code.push('\toptions[\'simulate\'] = false;');
 	code.push('\toptions[\'source\'] = \'pre-hook\';');
 	code.push('\toptions[\'operation\'] = item.operation;');
-	code.push('\treturn await callAllPreHooks(req, item.data, item.oldData, options);');
+	code.push('\tlet newData = await callAllPreHooks(req, item.data, item.oldData, options);');
+	code.push('\titem.data = newData;');
+	code.push('\treturn item;');
 	code.push('};');
 
 

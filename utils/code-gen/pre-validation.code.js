@@ -17,27 +17,28 @@ function genrateCode(data) {
 	code.push('const commonUtils = require(\'../../utils/common.utils\');');
 	code.push('');
 	code.push('const logger = log4js.getLogger(global.loggerName);');
-
+	code.push('');
 
 
 	code.push(`async function generateId(req, newData, oldData) {`);
 	code.push(`	const client = await MongoClient.connect(config.mongoDataUrl, config.mongoDataOptions);`);
 	code.push(`	const counterCol = client.db(config.namespace + '-${data.app}').collection('counter');`);
+	if (idDetails.counter) {
+		code.push(` try {`);
+		code.push(`		await counterCol.insert({ _id: 'employee', next: ${idDetails.counter} });`);
+		code.push(`		logger.info('Counter Value Initialised');`);
+		code.push(`	} catch (err) {`);
+		code.push(`		logger.warn('Counter Value Exists');`);
+		code.push(`	}`);
+	}
 	code.push(`	try {`);
 	code.push(`		let id = null;`);
-	code.push(`		if (typeof ${idDetails.counter} == 'number' && ${idDetails.counter} > -1) {`);
-	code.push(`			let doc = await counterCol.findOneAndUpdate({ _id: '${data.collectionName}' }, { $inc: { next: 1 } }, { upsert: true });`);
-	code.push(`			if (${idDetails.padding}) {`);
-	code.push(`				id = '${idDetails.prefix || ''}' + _.padStart((doc.next + ''), ${idDetails.padding}, '0') + '${idDetails.suffix || ''}';`);
-	code.push(`			} else {`);
-	code.push(`				id = '${idDetails.prefix || ''}' + doc.next + '${idDetails.suffix || ''}';`);
-	code.push(`			}`);
-	code.push(`		} else if (${idDetails.padding}) {`);
-	code.push(`			id = '${idDetails.prefix || ''}' + rand(${idDetails.padding}) + '${idDetails.suffix || ''}';`);
-	code.push(`		} else {`);
-	code.push(`			let doc = await counterCol.findOneAndUpdate({ _id: '${data.collectionName}' }, { $inc: { next: 1 } }, { upsert: true });`);
-	code.push(`			id = '${idDetails.prefix || ''}' + doc.next + '${idDetails.suffix || ''}'`);
-	code.push(`		}`);
+	code.push(`		let doc = await counterCol.findOneAndUpdate({ _id: '${data.collectionName}' }, { $inc: { next: 1 } }, { upsert: true });`);
+	if (idDetails.padding) {
+		code.push(`		id = '${idDetails.prefix || ''}' + _.padStart((doc.value.next + ''), ${idDetails.padding || 0}, '0') + '${idDetails.suffix || ''}';`);
+	} else {
+		code.push(`		id = '${idDetails.prefix || ''}' + doc.value.next + '${idDetails.suffix || ''}';`);
+	}
 	code.push(`		newData._id = id;`);
 	code.push(`	} catch (err) {`);
 	code.push(`		throw err;`);
@@ -154,7 +155,7 @@ function genrateCode(data) {
 	code.push('\tif (errors && Object.keys(errors).length > 0) return errors;');
 	code.push('\terrors = await validateDateFields(req, item.data, item.oldData);');
 	code.push('\tif (errors && Object.keys(errors).length > 0) return errors;');
-	code.push('\tif (item.operation == \'POST\' && !item.data._id) generateId(req, item.data, item.oldData)');
+	code.push('\tif (item.operation == \'POST\' && !item.data._id) await generateId(req, item.data, item.oldData)');
 	code.push('};');
 
 
