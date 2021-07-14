@@ -15,7 +15,7 @@ async function patchUserData(req, res, next) {
         req.user = await roleModel.getUser(req);
         next();
     } catch (err) {
-        logger.error('basicValidation :: ', err);
+        logger.error('patchUserData :: ', err);
         res.status(500).json({ message: err.message });
     }
 }
@@ -129,7 +129,7 @@ async function preHookValidation(req, res, next) {
         promises = null;
         next();
     } catch (err) {
-        logger.error('initCodeGen :: ', err);
+        logger.error('preHookValidation :: ', err);
         res.status(500).json({ message: err.message });
     }
 }
@@ -155,7 +155,7 @@ async function schemaValidation(req, res, next) {
         }
         next();
     } catch (err) {
-        logger.error('initCodeGen :: ', err);
+        logger.error('schemaValidation :: ', err);
         res.status(500).json({ message: err.message });
     }
 }
@@ -170,7 +170,7 @@ async function specialFieldsValidation(req, res, next) {
         promises = null;
         next();
     } catch (err) {
-        logger.error('initCodeGen :: ', err);
+        logger.error('specialFieldsValidation :: ', err);
         res.status(500).json({ message: err.message });
     }
 }

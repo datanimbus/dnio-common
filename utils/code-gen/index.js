@@ -23,7 +23,7 @@ function generateCode(srvc) {
         logger.info('Code Exists :: Skipping Code Generation');
         return srvc;
     }
-    removeOldFolder(srvc);
+    removeOldFolder(srvc._id);
     logger.info('New Version :: Generating Code');
     mkdirp.sync(serviceFolder);
     fs.writeFileSync(path.join(serviceFolder, 'schema.json'), JSON.stringify(schemaUtils.convertToJSONSchema(srvc.definition), null, 2));
@@ -34,9 +34,9 @@ function generateCode(srvc) {
 }
 
 
-function removeOldFolder(srvc) {
+function removeOldFolder(srvcId) {
     const folderList = fs.readdirSync(generatedCodePath);
-    const folderToDelete = folderList.find(e => e.startsWith(srvc._id));
+    const folderToDelete = folderList.find(e => e.startsWith(srvcId));
     if (folderToDelete) {
         logger.info('New Version :: Cleaning Old Code');
         fs.rmSync(path.join(generatedCodePath, folderToDelete), { recursive: true, force: true });
@@ -44,4 +44,13 @@ function removeOldFolder(srvc) {
 }
 
 
+function cleanGeneratedFiles() {
+    const folderList = fs.readdirSync(generatedCodePath);
+    folderList.forEach(folder => {
+        fs.rmSync(path.join(generatedCodePath, folder), { recursive: true, force: true });
+    });
+}
+
 module.exports.generateCode = generateCode;
+module.exports.cleanGeneratedFiles = cleanGeneratedFiles;
+module.exports.removeOldFolder = removeOldFolder;
