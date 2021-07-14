@@ -45,14 +45,14 @@ async function executeTransaction(payload) {
         return results;
     } catch (e) {
         logger.error('Transaction Error ', e);
-        session.abortTransaction();
+        await session.abortTransaction();
         logger.error('Transaction Aborted');
         logger.error('Error in  executeTransaction :: ', e);
         throw e;
     } finally {
         session.endSession();
         logger.info('Session Ended : ', dbname);
-        client.close(true);
+        await client.close(true);
         logger.info('Disconnected DB : ', dbname);
     }
 }

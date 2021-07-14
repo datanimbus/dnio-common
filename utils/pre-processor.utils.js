@@ -15,8 +15,11 @@ async function basicValidation(req, res, next) {
     try {
         let errors = [];
         req.body.forEach((item, index) => {
-            if ((item.operation === 'PUT' || item.operation === 'DELETE') && !item.data._id) {
+            if ((item.operation === 'PUT' || item.operation === 'DELETE') && (!item.data || !item.data._id)) {
                 errors.push({ item, index, error: 'ID was not provided for ' + item.operation + ' operation' });
+            }
+            if (!item.data) {
+                errors.push({ item, index, error: 'Data was not provided for ' + item.operation + ' operation' });
             }
             if (['PUT', 'POST', 'DELETE'].indexOf(item.operation) == -1) {
                 errors.push({ item, index, error: 'Only PUT/POST/DELETE is supported in a transaction' });
@@ -145,7 +148,7 @@ async function schemaValidation(req, res, next) {
 
 async function specialFieldsValidation(req, res, next) {
     try {
-        let promises = req.body.body.map(item => require(path.join(item.dataService.folderPath, 'pre-validation.js'))(req, item.data, item.oldData));
+        let promises = req.body.body.map(item => require(path.join(item.dataService.folderPath, 'pre-validation.js'))(req, item));
         promises = await Promise.all(promises);
         if (!_.isEmpty(promises.filter(e => e))) {
             return res.status(400).json({ message: 'Validation Error', errors: promises });
@@ -157,7 +160,6 @@ async function specialFieldsValidation(req, res, next) {
         res.status(500).json({ message: err.message });
     }
 }
-
 
 module.exports = {
     basicValidation,

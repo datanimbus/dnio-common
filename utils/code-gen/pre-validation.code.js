@@ -5,6 +5,9 @@ function genrateCode(data) {
 	if (typeof schema === 'string') {
 		schema = JSON.parse(schema);
 	}
+	const idDetails = schema.find(attr => attr.key == '_id');
+	if (idDetails.counter != null) idDetails.counter = parseInt(idDetails.counter);
+	if (idDetails.padding != null) idDetails.padding = parseInt(idDetails.padding);
 	const code = [];
 	code.push('const { MongoClient } = require(\'mongodb\');');
 	code.push('const log4js = require(\'log4js\');');
@@ -14,6 +17,45 @@ function genrateCode(data) {
 	code.push('const commonUtils = require(\'../../utils/common.utils\');');
 	code.push('');
 	code.push('const logger = log4js.getLogger(global.loggerName);');
+
+
+
+	code.push(`async function generateId(req, newData, oldData) {`);
+	code.push(`	const client = await MongoClient.connect(config.mongoDataUrl, config.mongoDataOptions);`);
+	code.push(`	const counterCol = client.db(config.namespace + '-${data.app}').collection('counter');`);
+	code.push(`	try {`);
+	code.push(`		let id = null;`);
+	code.push(`		if (typeof ${idDetails.counter} == 'number' && ${idDetails.counter} > -1) {`);
+	code.push(`			let doc = await counterCol.findOneAndUpdate({ _id: '${data.collectionName}' }, { $inc: { next: 1 } }, { upsert: true });`);
+	code.push(`			if (${idDetails.padding}) {`);
+	code.push(`				id = '${idDetails.prefix || ''}' + _.padStart((doc.next + ''), ${idDetails.padding}, '0') + '${idDetails.suffix || ''}';`);
+	code.push(`			} else {`);
+	code.push(`				id = '${idDetails.prefix || ''}' + doc.next + '${idDetails.suffix || ''}';`);
+	code.push(`			}`);
+	code.push(`		} else if (${idDetails.padding}) {`);
+	code.push(`			id = '${idDetails.prefix || ''}' + rand(${idDetails.padding}) + '${idDetails.suffix || ''}';`);
+	code.push(`		} else {`);
+	code.push(`			let doc = await counterCol.findOneAndUpdate({ _id: '${data.collectionName}' }, { $inc: { next: 1 } }, { upsert: true });`);
+	code.push(`			id = '${idDetails.prefix || ''}' + doc.next + '${idDetails.suffix || ''}'`);
+	code.push(`		}`);
+	code.push(`		newData._id = id;`);
+	code.push(`	} catch (err) {`);
+	code.push(`		throw err;`);
+	code.push(`	} finally {`);
+	code.push(`		await client.close(true);`);
+	code.push(`	}`);
+	code.push(`}`);
+	code.push(``);
+	code.push(`function rand(_i) {`);
+	code.push(`	var i = Math.pow(10, _i - 1);`);
+	code.push(`	var j = Math.pow(10, _i) - 1;`);
+	code.push(`	return ((Math.floor(Math.random() * (j - i + 1)) + i));`);
+	code.push(`};`);
+
+
+
+
+
 
 	/**------------------------ UNIQUE ----------------------- */
 	code.push('/**');
@@ -33,7 +75,7 @@ function genrateCode(data) {
 	code.push('\t\tlogger.error(\'validateUnique\', err);');
 	code.push('\t\terrors[\'global\'] = err;');
 	code.push('\t} finally {');
-	code.push('\t\tclient.close(true);');
+	code.push('\t\tawait client.close(true);');
 	code.push('\t\treturn Object.keys(errors).length > 0 ? errors : null;');
 	code.push('\t}');
 	code.push('}');
@@ -100,18 +142,19 @@ function genrateCode(data) {
 	/**------------------------ EXPORTS ----------------------- */
 
 	/**------------------------ METHODS ----------------------- */
-	code.push('module.exports = async function(req, newData, oldData) {');
+	code.push('module.exports = async function(req, item) {');
 	code.push('\tlet errors = {};');
-	code.push('\terrors = await validateUnique(req, newData, oldData);');
+	code.push('\terrors = await validateUnique(req, item.data, item.oldData);');
 	code.push('\tif (errors && Object.keys(errors).length > 0) return errors;');
-	code.push('\terrors = await encryptSecureFields(req, newData, oldData);');
+	code.push('\terrors = await encryptSecureFields(req, item.data, item.oldData);');
 	code.push('\tif (errors && Object.keys(errors).length > 0) return errors;');
-	code.push('\terrors = await fixBoolean(req, newData, oldData);');
+	code.push('\terrors = await fixBoolean(req, item.data, item.oldData);');
 	code.push('\tif (errors && Object.keys(errors).length > 0) return errors;');
-	code.push('\terrors = await enrichGeojson(req, newData, oldData);');
+	code.push('\terrors = await enrichGeojson(req, item.data, item.oldData);');
 	code.push('\tif (errors && Object.keys(errors).length > 0) return errors;');
-	code.push('\terrors = await validateDateFields(req, newData, oldData);');
+	code.push('\terrors = await validateDateFields(req, item.data, item.oldData);');
 	code.push('\tif (errors && Object.keys(errors).length > 0) return errors;');
+	code.push('\tif (item.operation == \'POST\' && !item.data._id) generateId(req, item.data, item.oldData)');
 	code.push('};');
 
 
