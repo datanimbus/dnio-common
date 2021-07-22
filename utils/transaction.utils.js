@@ -24,14 +24,20 @@ async function executeTransaction(payload) {
                 if (item.operation === 'POST') {
                     status = await dataDB.collection(item.dataService.collectionName).insert(item.data, { session });
                 } else if (item.operation === 'PUT') {
-                    status = await dataDB.collection(item.dataService.collectionName).findOneAndUpdate({ _id: item.data._id }, item.data, { session, upsert: item.upsert });
+                    let id = item.data._id;
+                    delete item.data._id;
+                    status = await dataDB.collection(item.dataService.collectionName).findOneAndUpdate({ _id: id }, { $set: item.data }, { session, upsert: item.upsert });
                 } else if (item.operation === 'DELETE') {
                     status = await dataDB.collection(item.dataService.collectionName).findOneAndDelete({ _id: item.data._id }, { session });
                 }
                 results.push({ statusCode: 200, body: status });
             } catch (err) {
                 logger.error(err);
-                results.push({ statusCode: 400, body: err });
+                if (err && typeof err === 'object') {
+                    results.push({ statusCode: 400, body: err.message });
+                } else {
+                    results.push({ statusCode: 400, body: err });
+                }
             } finally {
                 return;
             }
