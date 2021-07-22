@@ -58,7 +58,7 @@ async function getApproversList() {
 async function isWorkflowEnabled(req, filter) {
     try {
         const records = await global.authorDB.collection('userMgmt.roles').aggregate([
-            { $match: { _id: filter.serviceId } },
+            { $match: filter },
             { $unwind: '$roles' },
             { $unwind: '$roles.operations' },
             { $match: { 'roles.operations.method': 'REVIEW' } }
@@ -85,7 +85,7 @@ async function hasSkipReview(req, filter) {
         }
 
         const records = await global.authorDB.collection('userMgmt.roles').aggregate([
-            { $match: { _id: filter.serviceId } },
+            { $match: filter },
             { $unwind: '$roles' },
             { $unwind: '$roles.operations' },
             { $match: { 'roles.operations.method': 'SKIP_REVIEW' } },
@@ -120,7 +120,7 @@ async function hasManagePermission(req, filter) {
             throw new Error('UserID not found in request');
         }
         const records = await global.authorDB.collection('userMgmt.roles').aggregate([
-            { $match: { _id: filter.serviceId } },
+            { $match: filter },
             { $unwind: '$roles' },
             { $unwind: '$roles.operations' },
             { $match: { 'roles.operations.method': { $in: ['POST', 'PUT', 'DELETE'] } } },
@@ -158,7 +158,7 @@ async function isPreventedByWorkflow(req, filter) {
         }
 
         let records = await global.authorDB.collection('userMgmt.roles').aggregate([
-            { $match: { _id: filter.serviceId } },
+            { $match: filter },
             { $unwind: '$roles' },
             { $unwind: '$roles.operations' },
             { $match: { 'roles.operations.method': 'REVIEW' } }
@@ -167,7 +167,7 @@ async function isPreventedByWorkflow(req, filter) {
             return false;
         }
         records = await global.authorDB.collection('userMgmt.roles').aggregate([
-            { $match: { _id: filter.serviceId } },
+            { $match: filter },
             { $unwind: '$roles' },
             { $unwind: '$roles.operations' },
             { $match: { 'roles.operations.method': 'SKIP_REVIEW' } },
