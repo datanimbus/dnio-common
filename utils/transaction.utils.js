@@ -30,7 +30,13 @@ async function executeTransaction(payload) {
                 } else if (item.operation === 'DELETE') {
                     status = await dataDB.collection(item.dataService.collectionName).findOneAndDelete({ _id: item.data._id }, { session });
                 }
-                results.push({ statusCode: 200, body: status });
+                let result;
+                if (_.has(status, 'value')) {
+                    result = status.value;
+                } else {
+                    result = { _id: status.insertedIds['0'] };
+                }
+                results.push({ statusCode: 200, body: result });
             } catch (err) {
                 logger.error(err);
                 if (err && typeof err === 'object') {
