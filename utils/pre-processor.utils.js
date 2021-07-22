@@ -59,11 +59,15 @@ async function canDoTransaction(req, res, next) {
                     let workflowEnabled;
                     if (!cacheMap[data.dataService]) {
                         cacheMap[data.dataService] = {};
+                    }
+                    if (typeof cacheMap[data.dataService].managePermission !== 'boolean') {
                         if (!(req.user && req.user.isSuperAdmin)) {
                             cacheMap[data.dataService].managePermission = await roleModel.hasManagePermission(req, { _id: data.dataService });
                         } else {
                             cacheMap[data.dataService].managePermission = true;
                         }
+                    }
+                    if (typeof cacheMap[data.dataService].workflowEnabled !== 'boolean') {
                         cacheMap[data.dataService].workflowEnabled = await roleModel.isPreventedByWorkflow(req, { _id: data.dataService });
                     }
                     managePermission = (cacheMap[data.dataService].managePermission || false);
