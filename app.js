@@ -23,6 +23,11 @@ const app = express();
 app.use(express.json({ inflate: true }));
 app.use(express.urlencoded({ extended: true }));
 
+app.use((req, res, next) => {
+    logger.info(req.method, req.path, req.query);
+    next();
+});
+
 app.use(preProcessor.patchUserData);
 
 app.use('/api/common', require('./routes'));
