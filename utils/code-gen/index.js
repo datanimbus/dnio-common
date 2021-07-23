@@ -16,17 +16,23 @@ const generatedCodePath = path.join(process.cwd(), 'generatedCode');
 mkdirp.sync(generatedCodePath);
 
 
-function generateCode(srvc) {
+function generateCode(srvc, schemaValidator) {
     const serviceFolder = path.join(generatedCodePath, srvc._id + '_' + srvc.version);
     srvc.folderPath = serviceFolder;
     if (fs.existsSync(serviceFolder)) {
+        if (!schemaValidator.getSchema(srvc._id)) {
+            schemaValidator.addSchema(require(path.join(srvc.folderPath, 'schema.json')), srvc._id);
+        }
         logger.info('Code Exists :: Skipping Code Generation');
         return srvc;
     }
     removeOldFolder(srvc._id);
     logger.info('New Version :: Generating Code');
     mkdirp.sync(serviceFolder);
-    fs.writeFileSync(path.join(serviceFolder, 'schema.json'), JSON.stringify(schemaUtils.convertToJSONSchema(srvc.definition), null, 2));
+    const schemaJSON = schemaUtils.convertToJSONSchema(srvc.definition);
+    schemaValidator.removeSchema(srvc._id);
+    schemaValidator.addSchema(schemaJSON, srvc._id);
+    fs.writeFileSync(path.join(serviceFolder, 'schema.json'), JSON.stringify(schemaJSON, null, 2));
     fs.writeFileSync(path.join(serviceFolder, 'pre-hook.js'), preHookCode.genrateCode(srvc));
     fs.writeFileSync(path.join(serviceFolder, 'pre-validation.js'), preValidationCode.genrateCode(srvc));
     // fs.writeFileSync(path.join(serviceFolder, 'post-hook.js'), postHookCode.genrateCode(srvc));

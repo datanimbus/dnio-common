@@ -111,7 +111,15 @@ async function initCodeGen(req, res, next) {
         if (serviceIds.length !== services.length) {
             return res.status(400).json({ message: 'One or more data service ID(s) are invalid' });
         }
-        const all = await Promise.all(services.map((srvc) => codeGen.generateCode(srvc)));
+
+        // const all = await Promise.all(services.map((srvc) => codeGen.generateCode(srvc, schemaValidator)));
+        const all = [];
+        await services.reduce(async (prev, srvc) => {
+            await prev;
+            const temp = await codeGen.generateCode(srvc, schemaValidator);
+            all.push(temp);
+            return;
+        }, Promise.resolve());
         const body = req.body.map(e => {
             const srvc = all.find(s => s._id === e.dataService);
             e.dataService = srvc;
@@ -148,7 +156,9 @@ async function schemaValidation(req, res, next) {
             if (temp.oldData) {
                 item.data = _.merge(temp.oldData, item.data);
             }
-            if (!schemaValidator.validate(require(path.join(item.dataService.folderPath, 'schema.json')), item.data)) {
+            // let flag = schemaValidator.validate(require(path.join(item.dataService.folderPath, 'schema.json')), item.data);
+            let flag = schemaValidator.validate(schemaValidator.getSchema(item.dataService._id).schema, item.data);
+            if (!flag) {
                 delete item.oldData;
                 errors.push({ item, errors: schemaValidator.errors });
             }
