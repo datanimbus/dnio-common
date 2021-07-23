@@ -23,14 +23,18 @@ function getProperties(definition) {
     const properties = {};
     definition.forEach(def => {
         let dataKey = def.key;
-        if (def.properties.dataKey) {
-            dataKey = def.properties.dataKey;
-        }
         const dataTypes = [];
+        let dataType = def.type;
         if (def.type.toLowerCase() === "date") {
-            def.type = "string";
+            dataType = "string";
         }
-        dataTypes.push(def.type.toLowerCase());
+        if (def.type.toLowerCase() === "user"
+            || def.type.toLowerCase() === "geojson"
+            || def.type.toLowerCase() === "file"
+            || def.type.toLowerCase() === "date") {
+            dataType = "object";
+        }
+        dataTypes.push(dataType.toLowerCase());
         if (!def.properties.required) {
             dataTypes.push("null");
         }
@@ -39,9 +43,23 @@ function getProperties(definition) {
             description: def.properties.description
         };
         if (def.type === "Object") {
-            const converted = getProperties(def.definition);
-            properties[dataKey].properties = converted.properties;
-            properties[dataKey].required = converted.required;
+            if (def.properties.relatedTo) {
+                const userSchema = getRelationSchema();
+                properties[dataKey].properties = userSchema.properties;
+                properties[dataKey].required = userSchema.required;
+            } else if (def.properties.geoType) {
+                const geoSchema = getGeoJSONSchema();
+                properties[dataKey].properties = geoSchema.properties;
+                properties[dataKey].required = geoSchema.required;
+            } else if (def.properties.dateType) {
+                const dateSchema = getDateSchema();
+                properties[dataKey].properties = dateSchema.properties;
+                properties[dataKey].required = dateSchema.required;
+            } else {
+                const converted = getProperties(def.definition);
+                properties[dataKey].properties = converted.properties;
+                properties[dataKey].required = converted.required;
+            }
         } else if (def.type === "Array") {
             properties[dataKey].items = {};
             properties[dataKey].items.type = def.definition[0].type.toLowerCase();
@@ -53,6 +71,22 @@ function getProperties(definition) {
                 const validations = getValidations(def.definition[0]);
                 Object.assign(properties[dataKey].items, validations);
             }
+        } else if (def.type === "Date") {
+            const dateSchema = getDateSchema();
+            properties[dataKey].properties = dateSchema.properties;
+            properties[dataKey].required = dateSchema.required;
+        } else if (def.type === "User") {
+            const userSchema = getRelationSchema();
+            properties[dataKey].properties = userSchema.properties;
+            properties[dataKey].required = userSchema.required;
+        } else if (def.type === "Geojson") {
+            const geoSchema = getGeoJSONSchema();
+            properties[dataKey].properties = geoSchema.properties;
+            properties[dataKey].required = geoSchema.required;
+        } else if (def.type === "File") {
+            const fileSchema = getFileSchema();
+            properties[dataKey].properties = fileSchema.properties;
+            properties[dataKey].required = fileSchema.required;
         } else {
             const validations = getValidations(def);
             Object.assign(properties[dataKey], validations);
@@ -101,6 +135,132 @@ function getValidations(def) {
         }
     }
     return properties;
+}
+
+function getDateSchema() {
+    const required = [];
+    const properties = {
+        raw: {
+            type: ['string', 'null']
+        },
+        tzData: {
+            type: ['string', 'null']
+        },
+        tzInfo: {
+            type: ['string', 'null']
+        },
+        unix: {
+            type: ['number', 'null']
+        },
+        utc: {
+            type: ['string', 'null']
+        }
+    };
+    return { required, properties };
+}
+
+function getRelationSchema() {
+    const required = ['_id'];
+    const properties = {
+        _id: {
+            type: ['string', 'null']
+        }
+    };
+    return { required, properties };
+}
+
+function getGeoJSONSchema() {
+    const required = [];
+    const properties = {
+        userInput: {
+            type: ["string", "null"]
+        },
+        formattedAddress: {
+            type: "string"
+        },
+        geometry: {
+            type: "object",
+            properties: {
+                type: {
+                    type: "string"
+                },
+                coordinates: {
+                    type: "array",
+                    items: {
+                        type: "number"
+                    }
+                }
+            },
+            required: [
+                "coordinates",
+                "type"
+            ]
+        },
+        town: {
+            type: "string"
+        },
+        district: {
+            type: "string"
+        },
+        state: {
+            type: "string"
+        },
+        pincode: {
+            type: "string",
+            format: "integer"
+        },
+        country: {
+            type: "string"
+        }
+    };
+    return { required, properties };
+}
+
+function getFileSchema() {
+    const required = [
+        "length",
+        "chunkSize",
+        "uploadDate",
+        "filename",
+        "md5",
+        "contentType",
+        "metadata"
+    ];
+    const properties = {
+        _id: {
+            type: ["string", "null"]
+        },
+        length: {
+            type: "integer"
+        },
+        chunkSize: {
+            type: "integer"
+        },
+        uploadDate: {
+            type: "string"
+        },
+        filename: {
+            type: "string"
+        },
+        md5: {
+            type: "string"
+        },
+        contentType: {
+            type: "string"
+        },
+        metadata: {
+            type: "object",
+            properties: {
+                filename: {
+                    type: "string"
+                }
+            },
+            required: [
+                "filename"
+            ]
+        }
+    };
+    return { required, properties };
 }
 
 module.exports.convertToJSONSchema = convertToJSONSchema;
