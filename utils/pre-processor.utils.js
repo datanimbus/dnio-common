@@ -105,8 +105,8 @@ async function canDoTransaction(req, res, next) {
 }
 
 async function initCodeGen(req, res, next) {
+    const serviceIds = _.uniq(req.body.map(e => e.dataService));
     try {
-        const serviceIds = _.uniq(req.body.map(e => e.dataService));
         const services = await dataServiceModel.findAllService({ _id: { $in: serviceIds } });
         if (serviceIds.length !== services.length) {
             return res.status(400).json({ message: 'One or more data service ID(s) are invalid' });
@@ -120,6 +120,7 @@ async function initCodeGen(req, res, next) {
         req.body = { body, app: req.query.app };
         next();
     } catch (err) {
+        serviceIds.map(e => codeGen.removeOldFolder(e));
         logger.error('initCodeGen :: ', err);
         res.status(500).json({ message: err.message });
     }
