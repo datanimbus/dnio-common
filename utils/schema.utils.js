@@ -44,13 +44,13 @@ function getProperties(definition) {
             properties[dataKey].required = converted.required;
         } else if (def.type === "Array") {
             properties[dataKey].items = {};
-            properties[dataKey].items.type = def.definition._self.type.toLowerCase();
-            if (def.definition._self.type === "Object") {
-                const converted = getProperties(def.definition._self.definition);
+            properties[dataKey].items.type = def.definition[0].type.toLowerCase();
+            if (def.definition[0].type === "Object") {
+                const converted = getProperties(def.definition[0].definition);
                 properties[dataKey].items.properties = converted.properties;
                 properties[dataKey].items.required = converted.required;
             } else {
-                const validations = getValidations(def.definition._self);
+                const validations = getValidations(def.definition[0]);
                 Object.assign(properties[dataKey].items, validations);
             }
         } else {
