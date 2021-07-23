@@ -1,5 +1,6 @@
 const { MongoClient } = require('mongodb');
 const log4js = require('log4js');
+const _ = require('lodash');
 
 const config = require('../config');
 
