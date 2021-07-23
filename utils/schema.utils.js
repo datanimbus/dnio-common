@@ -1,14 +1,15 @@
 
 /**
  * 
- * @param {array} definition The Data.Stack schema definition
+ * @param {array} srvc The Data.Stack Data Service JSON
  */
-function convertToJSONSchema(definition) {
+function convertToJSONSchema(srvc) {
+    const definition = srvc.definition
     const tempSchema = {
         $schema: "http://json-schema.org/draft-07/schema#",
-        $id: "http://appveen.com/product.schema.json",
+        $id: `http://appveen.com/${srvc._id}.schema.json`,
         title: "Product",
-        description: "A product in the catalog",
+        description: `A ${srvc.name} in the catalog`,
         type: "object"
     };
     const converted = getProperties(definition);

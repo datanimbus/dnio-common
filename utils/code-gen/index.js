@@ -29,7 +29,7 @@ function generateCode(srvc, schemaValidator) {
     removeOldFolder(srvc._id);
     logger.info('New Version :: Generating Code');
     mkdirp.sync(serviceFolder);
-    const schemaJSON = schemaUtils.convertToJSONSchema(srvc.definition);
+    const schemaJSON = schemaUtils.convertToJSONSchema(srvc);
     schemaValidator.removeSchema(srvc._id);
     schemaValidator.addSchema(schemaJSON, srvc._id);
     fs.writeFileSync(path.join(serviceFolder, 'schema.json'), JSON.stringify(schemaJSON, null, 2));
