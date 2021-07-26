@@ -25,6 +25,7 @@ async function executeTransaction(payload) {
                 let result;
                 let id = item.data._id;
                 item.data._metadata = {
+                    deleted: false,
                     lastUpdated: new Date(),
                     version: {
                         release: config.release
