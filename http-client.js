@@ -46,7 +46,7 @@ async function httpRequest(options) {
             options['headers']['Content-Type'] = `application/json`;
         }
         const resp = await got(options);
-        return resp.body;
+        return { statusCode: resp.statusCode, body: resp.body };
     } catch (err) {
         if (err.response) {
             throw { statusCode: err.response.statusCode, body: err.response.body };
