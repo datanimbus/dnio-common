@@ -48,7 +48,11 @@ async function httpRequest(options) {
         const resp = await got(options);
         return resp.body;
     } catch (err) {
-        throw { statusCode: err.response.statusCode, body: err.response.body };
+        if (err.response) {
+            throw { statusCode: err.response.statusCode, body: err.response.body };
+        } else {
+            throw { statusCode: 500, body: err };
+        }
     }
 }
 
