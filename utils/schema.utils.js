@@ -7,8 +7,8 @@ function convertToJSONSchema(srvc) {
     const definition = srvc.definition
     const tempSchema = {
         $schema: "http://json-schema.org/draft-07/schema#",
-        $id: `http://appveen.com/${srvc._id}.schema.json`,
-        title: "Product",
+        // $id: `http://appveen.com/${srvc._id}.schema.json`,
+        title: srvc.name,
         description: `A ${srvc.name} in the catalog`,
         type: "object"
     };
@@ -207,8 +207,7 @@ function getGeoJSONSchema() {
             type: "string"
         },
         pincode: {
-            type: "string",
-            format: "integer"
+            type: "string"
         },
         country: {
             type: "string"

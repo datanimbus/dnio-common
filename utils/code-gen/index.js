@@ -21,10 +21,9 @@ function generateCode(srvc, schemaValidator) {
     srvc.folderPath = serviceFolder;
     if (fs.existsSync(serviceFolder)) {
         schemaValidator.removeSchema(srvc._id);
-        schemaValidator.addSchema(require(path.join(srvc.folderPath, 'schema.json')), srvc._id);
-        // if (!schemaValidator.getSchema(srvc._id)) {
-        //     schemaValidator.addSchema(require(path.join(srvc.folderPath, 'schema.json')), srvc._id);
-        // }
+        if (!schemaValidator.getSchema(srvc._id)) {
+            schemaValidator.addSchema(require(path.join(srvc.folderPath, 'schema.json')), srvc._id);
+        }
         logger.info('Code Exists :: Skipping Code Generation');
         return srvc;
     }
