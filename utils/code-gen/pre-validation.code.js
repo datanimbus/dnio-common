@@ -22,7 +22,7 @@ function genrateCode(data) {
 
 	code.push(`async function generateId(req, newData, oldData) {`);
 	code.push(`	const client = await MongoClient.connect(config.mongoDataUrl, config.mongoDataOptions);`);
-	code.push(`	const counterCol = client.db(config.namespace + '-${data.app}').collection('counter');`);
+	code.push(`	const counterCol = client.db(config.namespace + '-${data.app}').collection('counters');`);
 	if (idDetails.counter) {
 		code.push(` try {`);
 		code.push(`		await counterCol.insert({ _id: 'employee', next: ${idDetails.counter} });`);
