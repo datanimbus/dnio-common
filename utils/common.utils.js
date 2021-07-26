@@ -1,8 +1,11 @@
 const crypto = require('crypto');
+const log4js = require('log4js');
 const _ = require('lodash');
 
 const config = require('../config');
 const httpClient = require('../http-client');
+
+const logger = log4js.getLogger(global.loggerName);
 
 /**
  * 
