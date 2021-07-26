@@ -30,7 +30,7 @@ function encryptText(data) {
 			};
 			return obj;
 		} else {
-			throw new Error('Error decrypting text');
+			throw new Error('Error encrypting text');
 		}
 	}).catch(err => {
 		logger.error('Error requesting Security service');
@@ -57,7 +57,7 @@ function decryptText(data) {
 		if (res.statusCode === 200) {
 			return res.body.data;
 		} else {
-			throw new Error('Error encrypting text');
+			throw new Error('Error decrypting text');
 		}
 	}).catch(err => {
 		logger.error('Error requesting Security service');
