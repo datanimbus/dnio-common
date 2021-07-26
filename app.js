@@ -44,11 +44,11 @@ app.use(preProcessor.patchUserData);
 
 app.use('/api/common', require('./routes'));
 
-app.listen(config.port, () => {
+const server = app.listen(config.port, () => {
     logger.info('HTTP Server Listening on PORT:', config.port);
 });
 
-https.createServer({
+const httpsServer = https.createServer({
     cert: fs.readFileSync(path.join(process.cwd(), 'keys', 'txn.crt')),
     key: fs.readFileSync(path.join(process.cwd(), 'keys', 'txn.key'))
 }, app).listen(config.httpsPort, () => {
@@ -67,8 +67,11 @@ process.on('SIGTERM', () => {
             // Waiting For all pending requests to finish;
             if (global.activeRequest === 0) {
                 // Closing Express Server;
+                httpsServer.close(() => {
+                    logger.info('HTTPs Server Stopped.');
+                });
                 server.close(() => {
-                    logger.info('Server Stopped.');
+                    logger.info('HTTP Server Stopped.');
                     process.exit(0);
                 });
                 clearInterval(intVal);
