@@ -35,7 +35,9 @@ async function executeTransaction(payload) {
                 if (_.has(status, 'value')) {
                     result = status.value;
                 } else {
-                    result = { _id: status.insertedIds['0'] };
+                    // result = { _id: status.insertedIds['0'] };
+                    result = JSON.parse(JSON.stringify(item.data));
+                    result._id = status.insertedIds['0'];
                 }
                 results.push({ statusCode: 200, body: result });
             } catch (err) {
