@@ -20,9 +20,11 @@ function generateCode(srvc, schemaValidator) {
     const serviceFolder = path.join(generatedCodePath, srvc._id + '_' + srvc.version);
     srvc.folderPath = serviceFolder;
     if (fs.existsSync(serviceFolder)) {
-        if (!schemaValidator.getSchema(srvc._id)) {
-            schemaValidator.addSchema(require(path.join(srvc.folderPath, 'schema.json')), srvc._id);
-        }
+        schemaValidator.removeSchema(srvc._id);
+        schemaValidator.addSchema(require(path.join(srvc.folderPath, 'schema.json')), srvc._id);
+        // if (!schemaValidator.getSchema(srvc._id)) {
+        //     schemaValidator.addSchema(require(path.join(srvc.folderPath, 'schema.json')), srvc._id);
+        // }
         logger.info('Code Exists :: Skipping Code Generation');
         return srvc;
     }
