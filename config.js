@@ -61,6 +61,7 @@ e.namespace = process.env.DATA_STACK_NAMESPACE || 'appveen';
 e.permanentDelete = process.env.PERMANENT_DELETE ? parseBoolean(process.env.PERMANENT_DELETE) : true;
 e.MaxJSONSize = process.env.MAX_JSON_SIZE || '1mb';
 e.dataStackDefaultTimezone = process.env.TZ_DEFAULT || 'Zulu';
+e.release = process.env.RELEASE || '1.1.0';
 
 
 e.baseUrlSM = get('sm') + '/sm';

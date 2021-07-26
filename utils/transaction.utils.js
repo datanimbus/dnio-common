@@ -22,22 +22,34 @@ async function executeTransaction(payload) {
             try {
                 await prev;
                 let status;
+                let result;
+                let id = item.data._id;
+                item.data._metadata = {
+                    lastUpdated: new Date(),
+                    version: {
+                        release: config.release
+                    }
+                };
                 if (item.operation === 'POST') {
+                    item.data._metadata.createdAt = new Date();
+                    item.data._metadata.version.document = 1;
                     status = await dataDB.collection(item.dataService.collectionName).insert(item.data, { session });
+                    id = status.insertedIds['0'];
                 } else if (item.operation === 'PUT') {
-                    let id = item.data._id;
                     delete item.data._id;
+                    const oldData = await dataDB.collection(item.dataService.collectionName).findOne({ _id: id }, { session });
+                    _.merge(item.data, oldData);
                     status = await dataDB.collection(item.dataService.collectionName).findOneAndUpdate({ _id: id }, { $set: item.data }, { session, upsert: item.upsert });
+                    status = await dataDB.collection(item.dataService.collectionName).findOneAndUpdate({ _id: id }, { $inc: { '_metadata.version.document': 1 } }, { session });
                 } else if (item.operation === 'DELETE') {
                     status = await dataDB.collection(item.dataService.collectionName).findOneAndDelete({ _id: item.data._id }, { session });
                 }
-                let result;
-                if (_.has(status, 'value')) {
+                if (item.operation === 'POST') {
+                    result = await dataDB.collection(item.dataService.collectionName).findOne({ _id: id }, { session });
+                } else if (item.operation === 'PUT') {
                     result = status.value;
                 } else {
-                    // result = { _id: status.insertedIds['0'] };
-                    result = JSON.parse(JSON.stringify(item.data));
-                    result._id = status.insertedIds['0'];
+                    result = { message: 'Docuemnt Deleted Successfully' };
                 }
                 results.push({ statusCode: 200, body: result });
             } catch (err) {
