@@ -145,7 +145,7 @@ async function getGeoDetails(req, path, address) {
             return { key: path, geoObj: { userInput: address } };
         }
     } catch (e) {
-        logger.error(`[${req.headers[global.txnIdHeader]}] Error requesting Goolgle Maps API :: `, e.message);
+        logger.error(`[${req.headers[global.txnIdHeader]}] Error requesting Google Maps API :: `, e);
         throw e;
     }
 }
