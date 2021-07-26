@@ -22,8 +22,8 @@ async function encryptText(req, data) {
             'user': req ? req.headers[global.userHeader] : '',
             'Content-Type': 'application/json',
         },
-        body: { data },
-        json: true
+        json: { data },
+        responseType: 'json'
     };
     try {
         const res = await httpClient.httpRequest(options);
@@ -65,8 +65,8 @@ async function decryptText(req, data) {
             'user': req ? req.headers[global.userHeader] : '',
             'Content-Type': 'application/json',
         },
-        body: { data },
-        json: true
+        json: { data },
+        responseType: 'json'
     };
     try {
         const res = await httpClient.httpRequest(options);
@@ -93,14 +93,11 @@ async function decryptText(req, data) {
  */
 async function getGeoDetails(req, path, address) {
     address = typeof address === 'string' ? address : address.userInput;
+    const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${address}&key=${config.googleKey}`
     const options = {
-        url: 'https://maps.googleapis.com/maps/api/geocode/json',
+        url,
         method: 'GET',
-        json: true,
-        qs: {
-            address,
-            key: config.googleKey
-        }
+        responseType: 'json'
     };
     try {
         const res = await httpClient.httpRequest(options);
@@ -173,8 +170,8 @@ function invokeHook(data) {
         url: data.hook.url,
         method: 'POST',
         headers: headers,
-        json: true,
-        body: data.payload,
+        responseType: 'json',
+        json: data.payload,
         timeout: timeout * 1000
     };
     if (typeof process.env.TLS_REJECT_UNAUTHORIZED === 'string' && process.env.TLS_REJECT_UNAUTHORIZED.toLowerCase() === 'false') {
@@ -216,8 +213,8 @@ function invokeFunction(data, req) {
         url: config.baseUrlGW + data.hook.url,
         method: 'POST',
         headers: headers,
-        json: true,
-        body: data.payload,
+        responseType: 'json',
+        json: data.payload,
         timeout: timeout * 1000
     };
     if (typeof process.env.TLS_REJECT_UNAUTHORIZED === 'string' && process.env.TLS_REJECT_UNAUTHORIZED.toLowerCase() === 'false') {
