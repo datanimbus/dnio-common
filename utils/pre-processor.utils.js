@@ -92,7 +92,7 @@ async function canDoTransaction(req, res, next) {
             if (!all.every(e => e.managePermission)) {
                 return res.status(400).json({ message: 'No manage permission in atleast one Data Service', errors: all });
             }
-            if (all.includes(e => e.workflowEnabled)) {
+            if (all.some(e => e.workflowEnabled)) {
                 return res.status(400).json({ message: 'Skip Review is required in one of the Data Service', errors: all });
             }
             next();
