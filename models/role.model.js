@@ -181,7 +181,7 @@ async function isPreventedByWorkflow(req, filter) {
             },
             { $match: { 'groups.users': userId } },
         ]).toArray();
-        if (records && records.length > 1) {
+        if (records && records.length > 0) {
             return false;
         }
         return true;
