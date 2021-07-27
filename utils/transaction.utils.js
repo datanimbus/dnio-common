@@ -39,7 +39,7 @@ async function executeTransaction(payload) {
                 } else if (item.operation === 'PUT') {
                     delete item.data._id;
                     const oldData = await dataDB.collection(item.dataService.collectionName).findOne({ _id: id }, { session });
-                    _.merge(item.data, oldData);
+                    item.data = _.merge(oldData, item.data);
                     status = await dataDB.collection(item.dataService.collectionName).findOneAndUpdate({ _id: id }, { $set: item.data }, { session, upsert: item.upsert });
                     status = await dataDB.collection(item.dataService.collectionName).findOneAndUpdate({ _id: id }, { $inc: { '_metadata.version.document': 1 } }, { session, returnDocument: 'after' });
                 } else if (item.operation === 'DELETE') {
