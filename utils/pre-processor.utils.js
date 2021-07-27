@@ -23,6 +23,9 @@ async function patchUserData(req, res, next) {
 async function basicValidation(req, res, next) {
     try {
         let errors = [];
+        if (!req.query.app) {
+            errors.push({ error: 'App is required in query param' });
+        }
         req.body.forEach((item, index) => {
             if ((item.operation === 'PUT' || item.operation === 'DELETE') && (!item.data || !item.data._id)) {
                 errors.push({ item, index, error: 'ID was not provided for ' + item.operation + ' operation' });

@@ -89,8 +89,14 @@ function getProperties(definition) {
             properties[dataKey].properties = fileSchema.properties;
             properties[dataKey].required = fileSchema.required;
         } else {
-            const validations = getValidations(def);
-            Object.assign(properties[dataKey], validations);
+            if (def.properties.password) {
+                const secureTextSchema = getSecureTextSchema();
+                properties[dataKey].properties = secureTextSchema.properties;
+                properties[dataKey].required = secureTextSchema.required;
+            } else {
+                const validations = getValidations(def);
+                Object.assign(properties[dataKey], validations);
+            }
         }
         if (def.properties.required) {
             required.push(dataKey);
@@ -154,6 +160,16 @@ function getDateSchema() {
             type: ['number', 'null']
         },
         utc: {
+            type: ['string', 'null']
+        }
+    };
+    return { required, properties };
+}
+
+function getSecureTextSchema() {
+    const required = ['value'];
+    const properties = {
+        value: {
             type: ['string', 'null']
         }
     };

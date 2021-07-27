@@ -14,8 +14,9 @@ const logger = log4js.getLogger(global.loggerName);
  */
 async function encryptText(req, data) {
     data = data.toString();
+    const app = req.query.app;
     var options = {
-        url: config.baseUrlSEC + '/enc/' + config.app + '/encrypt',
+        url: config.baseUrlSEC + '/enc/' + app + '/encrypt',
         method: 'POST',
         headers: {
             'txnId': req ? req.headers[global.txnIdHeader] : '',
@@ -57,8 +58,9 @@ async function decryptText(req, data) {
         data = req;
         req = undefined;
     }
+    const app = req.query.app;
     var options = {
-        url: config.baseUrlSEC + '/enc/' + config.app + '/decrypt',
+        url: config.baseUrlSEC + '/enc/' + app + '/decrypt',
         method: 'POST',
         headers: {
             'txnId': req ? req.headers[global.txnIdHeader] : '',
