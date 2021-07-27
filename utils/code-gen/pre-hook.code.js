@@ -105,9 +105,9 @@ function genrateCode(data) {
 			code.push(`\t\tif (${!data.disableInsights} && preHookLog && preHookLog._id) {`);
 			code.push(`\t\t\ttry {`);
 			code.push(`\t\t\t\tawait db.collection(\`${data.app}.hook\`).insertOne(JSON.parse(JSON.stringify(preHookLog)));`);
-			code.push(`\t\t\t\tlogger.debug(\`[\${_txnId}] Pre-Hook log :: \${newData._id}\`);`);
+			code.push(`\t\t\t\tlogger.debug(\`[\${txnId}] Pre-Hook log :: \${newData._id}\`);`);
 			code.push(`\t\t\t} catch(err) {`);
-			code.push(`\t\t\t\tlogger.error(\`[\${_txnId}] Pre-Hook log :: \${newData._id} :: \${err.message}\`);`);
+			code.push(`\t\t\t\tlogger.error(\`[\${txnId}] Pre-Hook log :: \${newData._id} :: \${err.message}\`);`);
 			code.push(`\t\t\t}`);
 			code.push(`\t\t}`);
 			code.push(`\t}`);
