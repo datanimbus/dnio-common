@@ -21,7 +21,7 @@ global.activeRequest = 0;
 
 const app = express();
 
-app.use(express.json({ inflate: true }));
+app.use(express.json({ inflate: true, limit: config.MaxJSONSize }));
 app.use(express.urlencoded({ extended: true }));
 
 app.use((req, res, next) => {
