@@ -87,6 +87,7 @@ function genrateCode(data) {
 			code.push(`\t\tpreHookLog.data.new = JSON.parse(JSON.stringify(newData));`);
 			code.push(`\t\tpreHookLog.status = 'Success';`);
 			code.push(`\t\tpreHookLog.statusCode = resp.statusCode;`);
+			code.push(`\t\tpreHookLog.response = {};`);
 			code.push(`\t\tpreHookLog.response.headers = resp.headers;`);
 			code.push(`\t\tpreHookLog.response.body = resp.body;`);
 			code.push(`\t} catch (err) {`);
