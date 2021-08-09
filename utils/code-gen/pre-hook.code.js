@@ -14,7 +14,7 @@ function genrateCode(data) {
 	code.push('');
 	code.push('const logger = log4js.getLogger(global.loggerName);');
 
-	/**------------------------ UNIQUE ----------------------- */
+	/**------------------------ METHOD ----------------------- */
 	code.push('/**');
 	code.push(' * @param {*} req The Incomming Request Object');
 	code.push(' * @param {*} newData The New Document Object');
