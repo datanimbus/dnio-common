@@ -59,6 +59,7 @@ router.get('/swagger', async (req, res) => {
                     },
                     'upsert': {
                         type: 'boolean',
+                        default: false,
                         description: 'For PUT operations'
                     },
                     'data': {
