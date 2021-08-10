@@ -69,7 +69,7 @@ router.get('/swagger', async (req, res) => {
                 }
             }
         };
-        swagger.paths['/tnx'] = {
+        swagger.paths['/txn'] = {
             'x-swagger-router-controller': 'handleTransaction',
             post: {
                 description: `Do CUD Operation on Data Services using Transactions`,
