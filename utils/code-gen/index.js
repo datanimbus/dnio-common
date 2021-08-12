@@ -8,7 +8,7 @@ const schemaUtils = require('../schema.utils');
 const preValidationCode = require('./pre-validation.code');
 const preHookCode = require('./pre-hook.code');
 const postHookCode = require('./post-hook.code');
-// const transValidationCode = require('./trans-validation.code');
+const transValidationCode = require('./trans-validation.code');
 
 const logger = log4js.getLogger(global.loggerName);
 
@@ -16,7 +16,7 @@ const generatedCodePath = path.join(process.cwd(), 'generatedCode');
 mkdirp.sync(generatedCodePath);
 
 
-function generateCode(srvc, schemaValidator) {
+async function generateCode(srvc, schemaValidator) {
     const serviceFolder = path.join(generatedCodePath, srvc._id + '_' + srvc.version);
     srvc.folderPath = serviceFolder;
     if (fs.existsSync(serviceFolder)) {
@@ -37,6 +37,7 @@ function generateCode(srvc, schemaValidator) {
     fs.writeFileSync(path.join(serviceFolder, 'pre-hook.js'), preHookCode.genrateCode(srvc));
     fs.writeFileSync(path.join(serviceFolder, 'pre-validation.js'), preValidationCode.genrateCode(srvc));
     fs.writeFileSync(path.join(serviceFolder, 'post-hook.js'), postHookCode.genrateCode(srvc));
+    fs.writeFileSync(path.join(serviceFolder, 'trans-validation.js'), await transValidationCode.genrateCode(srvc));
     return srvc;
 }
 

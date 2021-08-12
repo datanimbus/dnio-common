@@ -18,7 +18,7 @@ async function executeTransaction(req, payload) {
         session = client.startSession();
         logger.info('Session Started : ', dbname);
         session.startTransaction(config.transactionOptions);
-        const results = [];
+        let results = [];
         await payload.body.reduce(async (prev, item) => {
             try {
                 await prev;
@@ -39,9 +39,10 @@ async function executeTransaction(req, payload) {
                     id = status.insertedIds['0'];
                 } else if (item.operation === 'PUT') {
                     delete item.data._id;
-                    const oldData = await dataDB.collection(item.dataService.collectionName).findOne({ _id: id }, { session });
-                    item.oldData = JSON.parse(JSON.stringify(oldData));
-                    item.data = _.merge(oldData, item.data);
+                    // const oldData = await dataDB.collection(item.dataService.collectionName).findOne({ _id: id }, { session });
+                    // item.oldData = JSON.parse(JSON.stringify(oldData));
+                    item.data = _.merge(item.oldData, item.data);
+                    require(path.join(item.dataService.folderPath, 'trans-validation.js')).validateCreateOnly(req, item.data, item.oldData);
                     status = await dataDB.collection(item.dataService.collectionName).findOneAndUpdate({ _id: id }, { $set: item.data }, { session, upsert: item.upsert });
                     status = await dataDB.collection(item.dataService.collectionName).findOneAndUpdate({ _id: id }, { $inc: { '_metadata.version.document': 1 } }, { session, returnDocument: 'after' });
                 } else if (item.operation === 'DELETE') {
@@ -73,13 +74,21 @@ async function executeTransaction(req, payload) {
             await session.abortTransaction();
             logger.error('Transaction Aborted');
         } else {
-            await session.commitTransaction();
-            try {
-                let promises = payload.body.map(item => require(path.join(item.dataService.folderPath, 'post-hook.js'))(req, item));
-                promises = await Promise.all(promises);
-                promises = null;
-            } catch (err) {
-                logger.error('Post-Hook Trigger :: ', err);
+            let promises = payload.body.map(item => require(path.join(item.dataService.folderPath, 'trans-validation.js')).validateRelation(req, item, dataDB, session));
+            promises = await Promise.all(promises);
+            if (promises.filter(e => e).length > 0) {
+                results = promises.filter(e => e).map(e => { return { statusCode: 400, body: e }; });
+                await session.abortTransaction();
+                logger.error('Transaction Aborted');
+            } else {
+                await session.commitTransaction();
+                try {
+                    promises = payload.body.map(item => require(path.join(item.dataService.folderPath, 'post-hook.js'))(req, item));
+                    promises = await Promise.all(promises);
+                    promises = null;
+                } catch (err) {
+                    logger.error('Post-Hook Trigger :: ', err);
+                }
             }
         }
         return results;

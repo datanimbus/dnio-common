@@ -1,19 +1,52 @@
 const _ = require('lodash');
 
-function genrateCode(config) {
+const dataServiceModel = require('../../models/data-service.model');
+
+async function genrateCode(config) {
 	let schema = config.definition;
 	if (typeof schema === 'string') {
 		schema = JSON.parse(schema);
 	}
+	const relatedServiceIds = _.uniq(config.relatedSchemas.outgoing.map(e => e.service));
 	const code = [];
+
 	code.push('const log4js = require(\'log4js\');');
 	code.push('const _ = require(\'lodash\');');
 	code.push('');
 	code.push('const config = require(\'../../config\');');
-	code.push('const httpClient = require(\'../../http-client\');');
-	code.push('const commonUtils = require(\'./common.utils\');');
 	code.push('');
 	code.push('const logger = log4js.getLogger(global.loggerName);');
+	code.push('const serviceFunctionMap = {};');
+
+	relatedServices = await dataServiceModel.findAllService({ _id: { $in: relatedServiceIds } });
+
+	code.push(`serviceFunctionMap['USER'] = async function(req, id, dataDB, session) {`);
+	code.push(`\ttry {`);
+	code.push(`\t\tlet doc = await global.authorDB.collection('userMgmt.users').findOne({ _id: id });`);
+	code.push(`\t\tif (doc) {`);
+	code.push(`\t\t\tdoc._href = \`/api/a/rbac/user/\${doc._id}\`;`);
+	code.push(`\t\t}`);
+	code.push(`\t\treturn doc;`);
+	code.push(`\t} catch (e) {`);
+	code.push(`\t\tlogger.error('[serviceFunctionMap] [USER]', e);`);
+	code.push(`\t\tthrow e;`);
+	code.push(`\t}`);
+	code.push(`};`);
+
+	relatedServices.map(srvc => {
+		code.push(`serviceFunctionMap['SRVC_${srvc._id}'] = async function(req, id, dataDB, session) {`);
+		code.push(`\ttry {`);
+		code.push(`\t\tlet doc = await dataDB.collection('${srvc.collectionName}').findOne({ _id: id }, { session });`);
+		code.push(`\t\tif (doc) {`);
+		code.push(`\t\t\tdoc._href = \`/api/c/${srvc.app}${srvc.api}/\${doc._id}\`;`);
+		code.push(`\t\t}`);
+		code.push(`\t\treturn doc;`);
+		code.push(`\t} catch (e) {`);
+		code.push(`\t\tlogger.error('[serviceFunctionMap] [SRVC_${srvc._id}]', e);`);
+		code.push(`\t\tthrow e;`);
+		code.push(`\t}`);
+		code.push(`};`);
+	});
 
 
 	/**------------------------ CREATE ONLY ----------------------- */
@@ -40,8 +73,10 @@ function genrateCode(config) {
 	code.push(' * @param {*} oldData The Old Document Object');
 	code.push(' * @returns {Promise<object>} Returns Promise of null if no validation error, else and error object with invalid paths');
 	code.push(' */');
-	code.push('async function validateRelation(req, newData, oldData) {');
+	code.push('async function validateRelation(req, item, dataDB, session) {');
 	code.push('\tconst errors = {};');
+	code.push('\tconst oldData = item.oldData;');
+	code.push('\tconst newData = item.newData;');
 	parseSchemaForRelation(schema);
 	code.push('\treturn Object.keys(errors).length > 0 ? errors : null;');
 	code.push('}');
@@ -68,10 +103,11 @@ function genrateCode(config) {
 					code.push(`\tlet ${_.camelCase(path + '._id')} = _.get(newData, '${path}._id')`);
 					code.push(`\tif (${_.camelCase(path + '._id')}) {`);
 					code.push('\t\ttry {');
-					if (def.properties.relatedTo)
-						code.push(`\t\t\tconst doc = await commonUtils.getServiceDoc(req, '${def.properties.relatedTo}', ${_.camelCase(path + '._id')}, true);`);
-					else
-						code.push(`\t\t\tconst doc = await commonUtils.getUserDoc(req, ${_.camelCase(path + '._id')});`);
+					if (def.properties.relatedTo) {
+						code.push(`\t\t\tconst doc = await serviceFunctionMap['SRVC_${def.properties.relatedTo}'](req, ${_.camelCase(path + '._id')}, dataDB, session);`);
+					} else {
+						code.push(`\t\t\tconst doc = await serviceFunctionMap['USER'](req, ${_.camelCase(path + '._id')}, dataDB, session);`);
+					}
 					code.push('\t\t\t\tif (!doc) {');
 					code.push(`\t\t\t\t\terrors['${path}'] = ${_.camelCase(path + '._id')} + ' not found';`);
 					code.push('\t\t\t\t} else {');
@@ -89,10 +125,11 @@ function genrateCode(config) {
 						code.push(`\tif (${_.camelCase(path)} && Array.isArray(${_.camelCase(path)}) && ${_.camelCase(path)}.length > 0) {`);
 						code.push(`\t\tlet promises = ${_.camelCase(path)}.map(async (item, i) => {`);
 						code.push('\t\t\ttry {');
-						if (def.definition[0].properties.relatedTo)
-							code.push(`\t\t\t\tconst doc = await commonUtils.getServiceDoc(req, '${def.definition[0].properties.relatedTo}', item._id, true);`);
-						else
-							code.push('\t\t\t\tconst doc = await commonUtils.getUserDoc(req, item._id);');
+						if (def.definition[0].properties.relatedTo) {
+							code.push(`\t\t\t\tconst doc = await serviceFunctionMap['SRVC_${def.definition[0].properties.relatedTo}'](req, item._id, dataDB, session);`);
+						} else {
+							code.push('\t\t\t\tconst doc = await serviceFunctionMap[\'USER\'](req, item._id, dataDB, session);');
+						}
 						code.push('\t\t\t\t\tif (!doc) {');
 						code.push(`\t\t\t\t\t\terrors['${path}.' + i] = item._id + ' not found';`);
 						code.push('\t\t\t\t\t} else {');
