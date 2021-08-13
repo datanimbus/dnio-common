@@ -177,7 +177,7 @@ function getSecureTextSchema() {
 }
 
 function getRelationSchema() {
-    const required = ['_id'];
+    const required = [];
     const properties = {
         _id: {
             type: ['string', 'null']

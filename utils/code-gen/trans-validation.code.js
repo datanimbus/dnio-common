@@ -10,6 +10,7 @@ async function genrateCode(config) {
 	const relatedServiceIds = _.uniq(config.relatedSchemas.outgoing.map(e => e.service));
 	const code = [];
 
+	code.push('const { MongoClient } = require(\'mongodb\');');
 	code.push('const log4js = require(\'log4js\');');
 	code.push('const _ = require(\'lodash\');');
 	code.push('');
@@ -17,8 +18,12 @@ async function genrateCode(config) {
 	code.push('');
 	code.push('const logger = log4js.getLogger(global.loggerName);');
 	code.push('const serviceFunctionMap = {};');
+	code.push('const serviceFunctionMapUpsert = {};');
+	code.push('const idGenerator = {};');
+	
 
 	relatedServices = await dataServiceModel.findAllService({ _id: { $in: relatedServiceIds } });
+
 
 	code.push(`serviceFunctionMap['USER'] = async function(req, id, dataDB, session) {`);
 	code.push(`\ttry {`);
@@ -34,6 +39,7 @@ async function genrateCode(config) {
 	code.push(`};`);
 
 	relatedServices.map(srvc => {
+		const idDetails = srvc.definition[0];
 		code.push(`serviceFunctionMap['SRVC_${srvc._id}'] = async function(req, id, dataDB, session) {`);
 		code.push(`\ttry {`);
 		code.push(`\t\tlet doc = await dataDB.collection('${srvc.collectionName}').findOne({ _id: id }, { session });`);
@@ -46,6 +52,54 @@ async function genrateCode(config) {
 		code.push(`\t\tthrow e;`);
 		code.push(`\t}`);
 		code.push(`};`);
+
+		code.push(`serviceFunctionMapUpsert['SRVC_${srvc._id}'] = async function(req, data, dataDB, session) {`);
+		code.push(`\ttry {`);
+		code.push(`\t\tlet status;`);
+		code.push(`\t\tif (!data._id) {`);
+		code.push(`\t\t\tawait idGenerator['SRVC_${srvc._id}'](req, data);`);
+		code.push(`\t\t\tstatus = await dataDB.collection('${srvc.collectionName}').insertOne(data, { session });`);
+		code.push(`\t\t\treturn status.insertedId;`);
+		code.push(`\t\t} else {`);
+		code.push(`\t\t\tstatus = await dataDB.collection('${srvc.collectionName}').updateOne({ _id: id }, data, { session, upsert: true, returnDocument: 'after' });`);
+		code.push(`\t\t\treturn status.value._id;`);
+		code.push(`\t\t}`);
+		code.push(`\t} catch (e) {`);
+		code.push(`\t\tlogger.error('[serviceFunctionMapUpsert] [SRVC_${srvc._id}]', e);`);
+		code.push(`\t\tthrow e;`);
+		code.push(`\t}`);
+		code.push(`};`);
+
+
+
+		code.push(`idGenerator['SRVC_${srvc._id}'] = async function(req, newData, oldData) {`);
+		code.push(`\tconst client = await MongoClient.connect(config.mongoDataUrl, config.mongoDataOptions);`);
+		code.push(`\tconst counterCol = client.db(config.namespace + '-${srvc.app}').collection('counters');`);
+		if (idDetails.counter) {
+			code.push(`\ttry {`);
+			code.push(`\t\tawait counterCol.insert({ _id: '${srvc.collectionName}', next: ${idDetails.counter} });`);
+			code.push(`\t\tlogger.info('Counter Value Initialised');`);
+			code.push(`\t} catch (err) {`);
+			code.push(`\t\tlogger.warn('Counter Value Exists');`);
+			code.push(`\t}`);
+		}
+		code.push(`\ttry {`);
+		code.push(`\t\tlet id = null;`);
+		code.push(`\t\tlet doc = await counterCol.findOneAndUpdate({ _id: '${srvc.collectionName}' }, { $inc: { next: 1 } }, { upsert: true });`);
+		if (idDetails.padding) {
+			code.push(`\t\tid = '${idDetails.prefix || ''}' + _.padStart((doc.value.next + ''), ${idDetails.padding || 0}, '0') + '${idDetails.suffix || ''}';`);
+		} else {
+			code.push(`\t\tid = '${idDetails.prefix || ''}' + doc.value.next + '${idDetails.suffix || ''}';`);
+		}
+		code.push(`\t\tnewData._id = id;`);
+		code.push(`\t} catch (err) {`);
+		code.push(`\t\tthrow err;`);
+		code.push(`\t} finally {`);
+		code.push(`\t\tawait client.close(true);`);
+		code.push(`\t}`);
+		code.push(`}`);
+
+
 	});
 
 
@@ -76,8 +130,26 @@ async function genrateCode(config) {
 	code.push('async function validateRelation(req, item, dataDB, session) {');
 	code.push('\tconst errors = {};');
 	code.push('\tconst oldData = item.oldData;');
-	code.push('\tconst newData = item.newData;');
+	code.push('\tconst newData = item.data;');
 	parseSchemaForRelation(schema);
+	code.push('\treturn Object.keys(errors).length > 0 ? errors : null;');
+	code.push('}');
+	code.push('');
+
+
+	/**------------------------ CREATE CASCADE PAYLOAD ----------------------- */
+	code.push('/**');
+	code.push(' * @param {*} req The Incomming Request Object');
+	code.push(' * @param {*} newData The New Document Object');
+	code.push(' * @param {*} oldData The Old Document Object');
+	code.push(' * @param {boolean} [forceRemove] Will remove all createOnly field');
+	code.push(' * @returns {object | null} Returns null if no validation error, else and error object with invalid paths');
+	code.push(' */');
+	code.push('async function createCascadeData(req, item, dataDB, session) {');
+	code.push('\tconst oldData = item.oldData;');
+	code.push('\tconst newData = item.data;');
+	code.push('\tconst errors = {};');
+	parseSchemaForCascade(schema);
 	code.push('\treturn Object.keys(errors).length > 0 ? errors : null;');
 	code.push('}');
 	code.push('');
@@ -89,6 +161,7 @@ async function genrateCode(config) {
 	/**------------------------ METHODS ----------------------- */
 	code.push('module.exports.validateCreateOnly = validateCreateOnly;');
 	code.push('module.exports.validateRelation = validateRelation;');
+	code.push('module.exports.createCascadeData = createCascadeData;');
 
 
 	return code.join('\n');
@@ -187,6 +260,61 @@ async function genrateCode(config) {
 						// code.push(`\t\t\tdelete newData['${path}'];`);
 						code.push(`\t\t\t\t\t_.set(newData, '${path}', _.get(oldData, '${path}'));`);
 						code.push('\t\t}');
+					}
+				}
+			}
+		});
+	}
+
+	function parseSchemaForCascade(schema, parentKey) {
+		schema.forEach(def => {
+			let key = def.key;
+			const path = parentKey ? parentKey + '.' + key : key;
+			if (key != '_id' && def.properties) {
+				if (def.properties.relatedTo) {
+					code.push(`\tlet ${_.camelCase(path)} = _.get(newData, '${path}')`);
+					code.push(`\tif (${_.camelCase(path)}) {`);
+					code.push('\t\ttry {');
+					code.push(`\t\t\tconst id = await serviceFunctionMapUpsert['SRVC_${def.properties.relatedTo}'](req, ${_.camelCase(path)}, dataDB, session);`);
+					code.push(`\t\t\tlet temp = { _id: id };`);
+					code.push(`\t\t\t_.set(newData, '${path}', temp);`);
+					code.push('\t\t} catch (e) {');
+					code.push(`\t\t\t_.set(newData, '${path}._error', e);`);
+					code.push(`\t\t\terrors['${path}'] = e.message ? e.message : e;`);
+					code.push('\t\t}');
+					code.push('\t}');
+				} else if (def.type == 'Object') {
+					parseSchemaForRelation(def.definition, path);
+				} else if (def.type == 'Array') {
+					if (def.definition[0].properties.relatedTo) {
+						code.push(`\tlet ${_.camelCase(path)} = _.get(newData, '${path}') || [];`);
+						code.push(`\tif (${_.camelCase(path)} && Array.isArray(${_.camelCase(path)}) && ${_.camelCase(path)}.length > 0) {`);
+						code.push(`\t\tlet promises = ${_.camelCase(path)}.map(async (item, i) => {`);
+						code.push('\t\t\tlet id;');
+						code.push('\t\t\ttry {');
+						code.push(`\t\t\t\tid = await serviceFunctionMapUpsert['SRVC_${def.definition[0].properties.relatedTo}'](req, item, dataDB, session);`);
+						code.push('\t\t\t} catch (e) {');
+						code.push(`\t\t\t\terrors['${path}.' + i] = e.message ? e.message : e;`);
+						code.push('\t\t\t\titem._error = e;');
+						code.push('\t\t\t\treturn item;');
+						code.push('\t\t\t} finally {');
+						code.push('\t\t\t\treturn { _id: id };');
+						code.push('\t\t\t}');
+						code.push('\t\t});');
+						code.push('\t\tpromises = await Promise.all(promises);');
+						code.push(`\t\t_.set(newData, '${path}', promises);`);
+						code.push('\t\tpromises = null;');
+						code.push('\t}');
+					} else if (def.definition[0].type == 'Object') {
+						code.push(`\tlet ${_.camelCase(path)} = _.get(newData, '${path}') || [];`);
+						code.push(`\tif (${_.camelCase(path)} && Array.isArray(${_.camelCase(path)}) && ${_.camelCase(path)}.length > 0) {`);
+						code.push(`\t\tlet promises = ${_.camelCase(path)}.map(async (newData, i) => {`);
+						parseSchemaForRelation(def.definition[0].definition, '');
+						code.push('\t\t});');
+						code.push('\t\tpromises = await Promise.all(promises);');
+						code.push('\t\tpromises = null;');
+						code.push(`\t\t_.set(newData, '${path}', ${_.camelCase(path)});`);
+						code.push('\t}');
 					}
 				}
 			}

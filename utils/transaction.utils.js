@@ -32,6 +32,9 @@ async function executeTransaction(req, payload) {
                         release: config.release
                     }
                 };
+                if (item.operation === 'POST' || item.operation === 'PUT'){
+                    await require(path.join(item.dataService.folderPath, 'trans-validation.js')).createCascadeData(req, item, dataDB, session);
+                }
                 if (item.operation === 'POST') {
                     item.data._metadata.createdAt = new Date();
                     item.data._metadata.version.document = 1;
