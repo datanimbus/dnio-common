@@ -25,7 +25,7 @@ function genrateCode(data) {
 	code.push(`	const counterCol = client.db(config.namespace + '-${data.app}').collection('counters');`);
 	if (idDetails.counter) {
 		code.push(` try {`);
-		code.push(`		await counterCol.insert({ _id: 'employee', next: ${idDetails.counter} });`);
+		code.push(`		await counterCol.insert({ _id: '${data.collectionName}', next: ${idDetails.counter} });`);
 		code.push(`		logger.info('Counter Value Initialised');`);
 		code.push(`	} catch (err) {`);
 		code.push(`		logger.warn('Counter Value Exists');`);
