@@ -115,6 +115,10 @@ async function initCodeGen(req, res, next) {
             return res.status(400).json({ message: 'One or more data service ID(s) are invalid' });
         }
 
+        if (!services.every(e => e.status == 'Active')) {
+            return res.status(400).json({ message: 'One or more data services are offline' });
+        }
+
         // const all = await Promise.all(services.map((srvc) => codeGen.generateCode(srvc, schemaValidator)));
         const all = [];
         await services.reduce(async (prev, srvc) => {
