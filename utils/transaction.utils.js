@@ -32,7 +32,7 @@ async function executeTransaction(req, payload) {
                         release: config.release
                     }
                 };
-                if (item.operation === 'POST' || item.operation === 'PUT'){
+                if (item.operation === 'POST' || item.operation === 'PUT') {
                     await require(path.join(item.dataService.folderPath, 'trans-validation.js')).createCascadeData(req, item, dataDB, session);
                 }
                 if (item.operation === 'POST') {
@@ -75,6 +75,15 @@ async function executeTransaction(req, payload) {
         }, Promise.resolve());
         if (!results.every(e => e.statusCode == 200)) {
             await session.abortTransaction();
+            results = results.map(e => {
+                let temp = e;
+                if (e.statusCode == 200) {
+                    temp = {}
+                    temp.statusCode = 200;
+                    temp.body = { message: 'Operation Aborted' }
+                }
+                return temp;
+            })
             logger.error('Transaction Aborted');
         } else {
             let promises = payload.body.map(item => require(path.join(item.dataService.folderPath, 'trans-validation.js')).validateRelation(req, item, dataDB, session));
