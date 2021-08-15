@@ -241,6 +241,13 @@ function mergeCustomizer(objValue, srcValue) {
     }
 }
 
+function hasRelationCascadeData(data) {
+    if (!data) {
+        return false;
+    }
+    const keys = Object.keys(data);
+    return keys.filter(e => !e.startsWith('_')).length > 0;
+}
 
 module.exports = {
     encryptText,
@@ -248,5 +255,6 @@ module.exports = {
     getGeoDetails,
     invokeHook,
     invokeFunction,
-    mergeCustomizer
+    mergeCustomizer,
+    hasRelationCascadeData
 }

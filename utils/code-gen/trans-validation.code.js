@@ -20,7 +20,7 @@ async function genrateCode(config) {
 	code.push('const serviceFunctionMap = {};');
 	code.push('const serviceFunctionMapUpsert = {};');
 	code.push('const idGenerator = {};');
-	
+
 
 	relatedServices = await dataServiceModel.findAllService({ _id: { $in: relatedServiceIds } });
 
@@ -138,22 +138,30 @@ async function genrateCode(config) {
 
 
 	/**------------------------ CREATE CASCADE PAYLOAD ----------------------- */
-	code.push('/**');
-	code.push(' * @param {*} req The Incomming Request Object');
-	code.push(' * @param {*} newData The New Document Object');
-	code.push(' * @param {*} oldData The Old Document Object');
-	code.push(' * @param {boolean} [forceRemove] Will remove all createOnly field');
-	code.push(' * @returns {object | null} Returns null if no validation error, else and error object with invalid paths');
-	code.push(' */');
-	code.push('async function createCascadeData(req, item, dataDB, session) {');
-	code.push('\tconst oldData = item.oldData;');
-	code.push('\tconst newData = item.data;');
-	code.push('\tconst errors = {};');
-	parseSchemaForCascade(schema);
-	code.push('\treturn Object.keys(errors).length > 0 ? errors : null;');
+	// code.push('/**');
+	// code.push(' * @param {*} req The Incomming Request Object');
+	// code.push(' * @param {*} newData The New Document Object');
+	// code.push(' * @param {*} oldData The Old Document Object');
+	// code.push(' * @param {boolean} [forceRemove] Will remove all createOnly field');
+	// code.push(' * @returns {object | null} Returns null if no validation error, else and error object with invalid paths');
+	// code.push(' */');
+	// code.push('async function createCascadeData(req, item, dataDB, session) {');
+	// code.push('\tconst oldData = item.oldData;');
+	// code.push('\tconst newData = item.data;');
+	// code.push('\tconst errors = {};');
+	// parseSchemaForCascade(schema);
+	// code.push('\treturn Object.keys(errors).length > 0 ? errors : null;');
+	// code.push('}');
+	// code.push('');
+
+
+	/**------------------------ CREATE CASCADE PAYLOAD ----------------------- */
+	code.push('async function genrateDocumentId(serviceID) {');
+	code.push('\tconst data = {};');
+	code.push('\tawait idGenerator[`SRVC_${serviceID}`](null, data, null);');
+	code.push('\treturn data._id;');
 	code.push('}');
 	code.push('');
-
 
 
 	/**------------------------ EXPORTS ----------------------- */
@@ -161,7 +169,7 @@ async function genrateCode(config) {
 	/**------------------------ METHODS ----------------------- */
 	code.push('module.exports.validateCreateOnly = validateCreateOnly;');
 	code.push('module.exports.validateRelation = validateRelation;');
-	code.push('module.exports.createCascadeData = createCascadeData;');
+	code.push('module.exports.genrateDocumentId = genrateDocumentId;');
 
 
 	return code.join('\n');
@@ -266,60 +274,60 @@ async function genrateCode(config) {
 		});
 	}
 
-	function parseSchemaForCascade(schema, parentKey) {
-		schema.forEach(def => {
-			let key = def.key;
-			const path = parentKey ? parentKey + '.' + key : key;
-			if (key != '_id' && def.properties) {
-				if (def.properties.relatedTo) {
-					code.push(`\tlet ${_.camelCase(path)} = _.get(newData, '${path}')`);
-					code.push(`\tif (${_.camelCase(path)}) {`);
-					code.push('\t\ttry {');
-					code.push(`\t\t\tconst id = await serviceFunctionMapUpsert['SRVC_${def.properties.relatedTo}'](req, ${_.camelCase(path)}, dataDB, session);`);
-					code.push(`\t\t\tlet temp = { _id: id };`);
-					code.push(`\t\t\t_.set(newData, '${path}', temp);`);
-					code.push('\t\t} catch (e) {');
-					code.push(`\t\t\t_.set(newData, '${path}._error', e);`);
-					code.push(`\t\t\terrors['${path}'] = e.message ? e.message : e;`);
-					code.push('\t\t}');
-					code.push('\t}');
-				} else if (def.type == 'Object') {
-					parseSchemaForRelation(def.definition, path);
-				} else if (def.type == 'Array') {
-					if (def.definition[0].properties.relatedTo) {
-						code.push(`\tlet ${_.camelCase(path)} = _.get(newData, '${path}') || [];`);
-						code.push(`\tif (${_.camelCase(path)} && Array.isArray(${_.camelCase(path)}) && ${_.camelCase(path)}.length > 0) {`);
-						code.push(`\t\tlet promises = ${_.camelCase(path)}.map(async (item, i) => {`);
-						code.push('\t\t\tlet id;');
-						code.push('\t\t\ttry {');
-						code.push(`\t\t\t\tid = await serviceFunctionMapUpsert['SRVC_${def.definition[0].properties.relatedTo}'](req, item, dataDB, session);`);
-						code.push('\t\t\t} catch (e) {');
-						code.push(`\t\t\t\terrors['${path}.' + i] = e.message ? e.message : e;`);
-						code.push('\t\t\t\titem._error = e;');
-						code.push('\t\t\t\treturn item;');
-						code.push('\t\t\t} finally {');
-						code.push('\t\t\t\treturn { _id: id };');
-						code.push('\t\t\t}');
-						code.push('\t\t});');
-						code.push('\t\tpromises = await Promise.all(promises);');
-						code.push(`\t\t_.set(newData, '${path}', promises);`);
-						code.push('\t\tpromises = null;');
-						code.push('\t}');
-					} else if (def.definition[0].type == 'Object') {
-						code.push(`\tlet ${_.camelCase(path)} = _.get(newData, '${path}') || [];`);
-						code.push(`\tif (${_.camelCase(path)} && Array.isArray(${_.camelCase(path)}) && ${_.camelCase(path)}.length > 0) {`);
-						code.push(`\t\tlet promises = ${_.camelCase(path)}.map(async (newData, i) => {`);
-						parseSchemaForRelation(def.definition[0].definition, '');
-						code.push('\t\t});');
-						code.push('\t\tpromises = await Promise.all(promises);');
-						code.push('\t\tpromises = null;');
-						code.push(`\t\t_.set(newData, '${path}', ${_.camelCase(path)});`);
-						code.push('\t}');
-					}
-				}
-			}
-		});
-	}
+	// function parseSchemaForCascade(schema, parentKey) {
+	// 	schema.forEach(def => {
+	// 		let key = def.key;
+	// 		const path = parentKey ? parentKey + '.' + key : key;
+	// 		if (key != '_id' && def.properties) {
+	// 			if (def.properties.relatedTo) {
+	// 				code.push(`\tlet ${_.camelCase(path)} = _.get(newData, '${path}')`);
+	// 				code.push(`\tif (${_.camelCase(path)}) {`);
+	// 				code.push('\t\ttry {');
+	// 				code.push(`\t\t\tconst id = await serviceFunctionMapUpsert['SRVC_${def.properties.relatedTo}'](req, ${_.camelCase(path)}, dataDB, session);`);
+	// 				code.push(`\t\t\tlet temp = { _id: id };`);
+	// 				code.push(`\t\t\t_.set(newData, '${path}', temp);`);
+	// 				code.push('\t\t} catch (e) {');
+	// 				code.push(`\t\t\t_.set(newData, '${path}._error', e);`);
+	// 				code.push(`\t\t\terrors['${path}'] = e.message ? e.message : e;`);
+	// 				code.push('\t\t}');
+	// 				code.push('\t}');
+	// 			} else if (def.type == 'Object') {
+	// 				parseSchemaForRelation(def.definition, path);
+	// 			} else if (def.type == 'Array') {
+	// 				if (def.definition[0].properties.relatedTo) {
+	// 					code.push(`\tlet ${_.camelCase(path)} = _.get(newData, '${path}') || [];`);
+	// 					code.push(`\tif (${_.camelCase(path)} && Array.isArray(${_.camelCase(path)}) && ${_.camelCase(path)}.length > 0) {`);
+	// 					code.push(`\t\tlet promises = ${_.camelCase(path)}.map(async (item, i) => {`);
+	// 					code.push('\t\t\tlet id;');
+	// 					code.push('\t\t\ttry {');
+	// 					code.push(`\t\t\t\tid = await serviceFunctionMapUpsert['SRVC_${def.definition[0].properties.relatedTo}'](req, item, dataDB, session);`);
+	// 					code.push('\t\t\t} catch (e) {');
+	// 					code.push(`\t\t\t\terrors['${path}.' + i] = e.message ? e.message : e;`);
+	// 					code.push('\t\t\t\titem._error = e;');
+	// 					code.push('\t\t\t\treturn item;');
+	// 					code.push('\t\t\t} finally {');
+	// 					code.push('\t\t\t\treturn { _id: id };');
+	// 					code.push('\t\t\t}');
+	// 					code.push('\t\t});');
+	// 					code.push('\t\tpromises = await Promise.all(promises);');
+	// 					code.push(`\t\t_.set(newData, '${path}', promises);`);
+	// 					code.push('\t\tpromises = null;');
+	// 					code.push('\t}');
+	// 				} else if (def.definition[0].type == 'Object') {
+	// 					code.push(`\tlet ${_.camelCase(path)} = _.get(newData, '${path}') || [];`);
+	// 					code.push(`\tif (${_.camelCase(path)} && Array.isArray(${_.camelCase(path)}) && ${_.camelCase(path)}.length > 0) {`);
+	// 					code.push(`\t\tlet promises = ${_.camelCase(path)}.map(async (newData, i) => {`);
+	// 					parseSchemaForRelation(def.definition[0].definition, '');
+	// 					code.push('\t\t});');
+	// 					code.push('\t\tpromises = await Promise.all(promises);');
+	// 					code.push('\t\tpromises = null;');
+	// 					code.push(`\t\t_.set(newData, '${path}', ${_.camelCase(path)});`);
+	// 					code.push('\t}');
+	// 				}
+	// 			}
+	// 		}
+	// 	});
+	// }
 }
 
 

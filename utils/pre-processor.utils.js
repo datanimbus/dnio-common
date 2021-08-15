@@ -110,7 +110,7 @@ async function canDoTransaction(req, res, next) {
 async function initCodeGen(req, res, next) {
     const serviceIds = _.uniq(req.body.map(e => e.dataService));
     try {
-        const services = await dataServiceModel.findAllService({ _id: { $in: serviceIds } });
+        let services = await dataServiceModel.findAllService({ _id: { $in: serviceIds } });
         if (serviceIds.length !== services.length) {
             return res.status(400).json({ message: 'One or more data service ID(s) are invalid' });
         }
@@ -118,8 +118,18 @@ async function initCodeGen(req, res, next) {
         if (!services.every(e => e.status == 'Active')) {
             return res.status(400).json({ message: 'One or more data services are offline' });
         }
+        if (!services.every(e => e.app == req.query.app)) {
+            return res.status(400).json({ message: 'One or more data services are not available on same app' });
+        }
+        const allServiceIds = _.uniq(_.concat(serviceIds, _.flattenDeep(services.map(e => (e.relatedSchemas.outgoing || []).map(eo => eo.service)))));
 
-        // const all = await Promise.all(services.map((srvc) => codeGen.generateCode(srvc, schemaValidator)));
+        /**
+         * @description Make another DB call only if relation exists.
+         */
+        if (allServiceIds.length != serviceIds.length) {
+            services = await dataServiceModel.findAllService({ _id: { $in: allServiceIds } });
+        }
+
         const all = [];
         await services.reduce(async (prev, srvc) => {
             await prev;
@@ -127,11 +137,23 @@ async function initCodeGen(req, res, next) {
             all.push(temp);
             return;
         }, Promise.resolve());
-        const body = req.body.map(e => {
+        let promises = req.body.map(async (e) => {
+            const temp = [];
             const srvc = all.find(s => s._id === e.dataService);
             e.dataService = srvc;
-            return e;
+            temp.push(e);
+            if (srvc.relatedSchemas.outgoing && srvc.relatedSchemas.outgoing.length > 0) {
+                const payloads = await require(path.join(srvc.folderPath, 'cascade-payload.js')).createCascadePayload(req, e.data);
+                payloads.forEach(pl => {
+                    const t = all.find(s => s._id === pl.dataService);
+                    pl.dataService = t;
+                    temp.push(pl);
+                });
+            }
+            return temp;
         });
+        promises = await Promise.all(promises);
+        const body = _.flatten(promises);
         req.body = { body, app: req.query.app };
         next();
     } catch (err) {
@@ -167,6 +189,11 @@ async function schemaValidation(req, res, next) {
             let flag = schemaValidator.validate(schemaValidator.getSchema(item.dataService._id).schema, item.data);
             if (!flag) {
                 delete item.oldData;
+                delete item.temp;
+                delete item.app;
+                let srvcId = item.dataService._id;
+                delete item.dataService;
+                item.dataService = srvcId;
                 errors.push({ item, errors: schemaValidator.errors });
             }
             return item;

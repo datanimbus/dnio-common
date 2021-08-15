@@ -9,6 +9,7 @@ const preValidationCode = require('./pre-validation.code');
 const preHookCode = require('./pre-hook.code');
 const postHookCode = require('./post-hook.code');
 const transValidationCode = require('./trans-validation.code');
+const cascadeCode = require('./cascade.code');
 
 const logger = log4js.getLogger(global.loggerName);
 
@@ -37,6 +38,7 @@ async function generateCode(srvc, schemaValidator) {
     fs.writeFileSync(path.join(serviceFolder, 'pre-hook.js'), preHookCode.genrateCode(srvc));
     fs.writeFileSync(path.join(serviceFolder, 'pre-validation.js'), preValidationCode.genrateCode(srvc));
     fs.writeFileSync(path.join(serviceFolder, 'post-hook.js'), postHookCode.genrateCode(srvc));
+    fs.writeFileSync(path.join(serviceFolder, 'cascade-payload.js'), cascadeCode.genrateCode(srvc));
     fs.writeFileSync(path.join(serviceFolder, 'trans-validation.js'), await transValidationCode.genrateCode(srvc));
     return srvc;
 }

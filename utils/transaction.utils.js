@@ -20,6 +20,7 @@ async function executeTransaction(req, payload) {
         session.startTransaction(config.transactionOptions);
         let results = [];
         await payload.body.reduce(async (prev, item) => {
+            let oneResult = { temp: (item.temp || false) };
             try {
                 await prev;
                 let status;
@@ -32,9 +33,9 @@ async function executeTransaction(req, payload) {
                         release: config.release
                     }
                 };
-                if (item.operation === 'POST' || item.operation === 'PUT') {
-                    await require(path.join(item.dataService.folderPath, 'trans-validation.js')).createCascadeData(req, item, dataDB, session);
-                }
+                // if (item.operation === 'POST' || item.operation === 'PUT') {
+                //     await require(path.join(item.dataService.folderPath, 'trans-validation.js')).createCascadeData(req, item, dataDB, session);
+                // }
                 if (item.operation === 'POST') {
                     item.data._metadata.createdAt = new Date();
                     item.data._metadata.version.document = 1;
@@ -61,15 +62,19 @@ async function executeTransaction(req, payload) {
                     result = { message: 'Docuemnt Deleted Successfully' };
                     item.newData = null;
                 }
-                results.push({ statusCode: 200, body: result });
+                oneResult.statusCode = 200;
+                oneResult.body = result;
             } catch (err) {
                 logger.error(err);
                 if (err && typeof err === 'object') {
-                    results.push({ statusCode: 400, body: err.message });
+                    oneResult.statusCode = 400;
+                    oneResult.body = { message: err.message };
                 } else {
-                    results.push({ statusCode: 400, body: err });
+                    oneResult.statusCode = 400;
+                    oneResult.body = { message: err };
                 }
             } finally {
+                results.push(oneResult);
                 return;
             }
         }, Promise.resolve());
@@ -78,15 +83,13 @@ async function executeTransaction(req, payload) {
             results = results.map(e => {
                 let temp = e;
                 if (e.statusCode == 200) {
-                    temp = {}
-                    temp.statusCode = 200;
                     temp.body = { message: 'Operation Aborted' }
                 }
                 return temp;
-            })
+            });
             logger.error('Transaction Aborted');
         } else {
-            let promises = payload.body.map(item => require(path.join(item.dataService.folderPath, 'trans-validation.js')).validateRelation(req, item, dataDB, session));
+            let promises = payload.body.filter(e => !e.temp).map(item => require(path.join(item.dataService.folderPath, 'trans-validation.js')).validateRelation(req, item, dataDB, session));
             promises = await Promise.all(promises);
             if (promises.filter(e => e).length > 0) {
                 results = promises.filter(e => e).map(e => { return { statusCode: 400, body: e }; });
@@ -103,7 +106,10 @@ async function executeTransaction(req, payload) {
                 }
             }
         }
-        return results;
+        return results.filter(e => !e.temp).map(e=>{
+            delete e.temp;
+            return e;
+        });
     } catch (e) {
         logger.error('Transaction Error ', e);
         await session.abortTransaction();
