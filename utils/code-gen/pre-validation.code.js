@@ -205,7 +205,7 @@ function genrateCode(data) {
 					code.push(`\tlet ${_.camelCase(path + '.value')}Old = _.get(oldData, '${path}.value')`);
 					code.push(`\tif (${_.camelCase(path + '.value')}New && ${_.camelCase(path + '.value')}New != ${_.camelCase(path + '.value')}Old) {`);
 					code.push('\t\ttry {');
-					code.push(`\t\t\tconst doc = await commonUtils.encryptText(req, ${_.camelCase(path + '.value')}New);`);
+					code.push(`\t\t\tconst doc = await commonUtils.encryptText(req, '${data.app}', ${_.camelCase(path + '.value')}New);`);
 					code.push('\t\t\tif (doc) {');
 					code.push(`\t\t\t\t_.set(newData, '${path}', doc);`);
 					code.push('\t\t\t}');
@@ -223,7 +223,7 @@ function genrateCode(data) {
 						code.push(`\t\tlet promises = ${_.camelCase(path)}New.map(async (item, i) => {`);
 						code.push('\t\t\ttry {');
 						code.push(`\t\t\t\tif (item && item.value && !${_.camelCase(path)}Old.find(e => e.value == item.value)) {`);
-						code.push('\t\t\t\t\tconst doc = await commonUtils.encryptText(req, item.value);');
+						code.push(`\t\t\t\t\tconst doc = await commonUtils.encryptText(req, '${data.app}', item.value);`);
 						code.push('\t\t\t\t\tif (doc) {');
 						code.push('\t\t\t\t\t\t_.assign(item, doc);');
 						code.push('\t\t\t\t\t}');

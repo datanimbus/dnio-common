@@ -23,9 +23,6 @@ async function patchUserData(req, res, next) {
 async function basicValidation(req, res, next) {
     try {
         let errors = [];
-        if (!req.query.app) {
-            errors.push({ error: 'App is required in query param' });
-        }
         req.body.forEach((item, index) => {
             if ((item.operation === 'PUT' || item.operation === 'DELETE') && (!item.data || !item.data._id)) {
                 errors.push({ item, index, error: 'ID was not provided for ' + item.operation + ' operation' });
@@ -38,6 +35,10 @@ async function basicValidation(req, res, next) {
             }
             if (!item.dataService) {
                 errors.push({ item, index, error: 'Data Service was not provided' });
+            } else if (!item.dataService.app) {
+                errors.push({ item, index, error: 'Data Service App was not provided' });
+            } else if (!item.dataService.name) {
+                errors.push({ item, index, error: 'Data Service Name was not provided' });
             }
         });
         if (errors.length > 0) {
@@ -60,21 +61,21 @@ async function canDoTransaction(req, res, next) {
                 try {
                     let managePermission;
                     let workflowEnabled;
-                    if (!cacheMap[data.dataService]) {
-                        cacheMap[data.dataService] = {};
+                    if (!cacheMap[data.dataService.name]) {
+                        cacheMap[data.dataService.name] = {};
                     }
-                    if (typeof cacheMap[data.dataService].managePermission !== 'boolean') {
+                    if (typeof cacheMap[data.dataService.name].managePermission !== 'boolean') {
                         if (!(req.user && req.user.isSuperAdmin)) {
-                            cacheMap[data.dataService].managePermission = await roleModel.hasManagePermission(req, { _id: data.dataService });
+                            cacheMap[data.dataService.name].managePermission = await roleModel.hasManagePermission(req, data.dataService);
                         } else {
-                            cacheMap[data.dataService].managePermission = true;
+                            cacheMap[data.dataService.name].managePermission = true;
                         }
                     }
-                    if (typeof cacheMap[data.dataService].workflowEnabled !== 'boolean') {
-                        cacheMap[data.dataService].workflowEnabled = await roleModel.isPreventedByWorkflow(req, { _id: data.dataService });
+                    if (typeof cacheMap[data.dataService.name].workflowEnabled !== 'boolean') {
+                        cacheMap[data.dataService.name].workflowEnabled = await roleModel.isPreventedByWorkflow(req, data.dataService);
                     }
-                    managePermission = (cacheMap[data.dataService].managePermission || false);
-                    workflowEnabled = (cacheMap[data.dataService].workflowEnabled || false);
+                    managePermission = (cacheMap[data.dataService.name].managePermission || false);
+                    workflowEnabled = (cacheMap[data.dataService.name].workflowEnabled || false);
                     return {
                         dataService: data.dataService,
                         managePermission,
@@ -108,25 +109,23 @@ async function canDoTransaction(req, res, next) {
 }
 
 async function initCodeGen(req, res, next) {
-    const serviceIds = _.uniq(req.body.map(e => e.dataService));
+    const servicesFilter = _.uniqBy(req.body.map(e => e.dataService), 'name');
+    let services;
     try {
-        let services = await dataServiceModel.findAllService({ _id: { $in: serviceIds } });
-        if (serviceIds.length !== services.length) {
+        services = await dataServiceModel.findAllService({ $or: servicesFilter });
+        if (servicesFilter.length !== services.length) {
             return res.status(400).json({ message: 'One or more data service ID(s) are invalid' });
         }
 
         if (!services.every(e => e.status == 'Active')) {
             return res.status(400).json({ message: 'One or more data services are offline' });
         }
-        if (!services.every(e => e.app == req.query.app)) {
-            return res.status(400).json({ message: 'One or more data services are not available on same app' });
-        }
-        const allServiceIds = _.uniq(_.concat(serviceIds, _.flattenDeep(services.map(e => (e.relatedSchemas.outgoing || []).map(eo => eo.service)))));
+        const allServiceIds = _.uniq(_.concat(services.map(e => e._id), _.flattenDeep(services.map(e => (e.relatedSchemas.outgoing || []).map(eo => eo.service)))));
 
         /**
          * @description Make another DB call only if relation exists.
          */
-        if (allServiceIds.length != serviceIds.length) {
+        if (allServiceIds.length != servicesFilter.length) {
             services = await dataServiceModel.findAllService({ _id: { $in: allServiceIds } });
         }
 
@@ -137,10 +136,12 @@ async function initCodeGen(req, res, next) {
             all.push(temp);
             return;
         }, Promise.resolve());
+        let app;
         let promises = req.body.map(async (e) => {
             const temp = [];
-            const srvc = all.find(s => s._id === e.dataService);
+            const srvc = _.find(all, e.dataService);
             e.dataService = srvc;
+            app = srvc.app;
             temp.push(e);
             if (srvc.relatedSchemas.outgoing && srvc.relatedSchemas.outgoing.length > 0) {
                 const payloads = await require(path.join(srvc.folderPath, 'cascade-payload.js')).createCascadePayload(req, e.data);
@@ -154,10 +155,10 @@ async function initCodeGen(req, res, next) {
         });
         promises = await Promise.all(promises);
         const body = _.flatten(promises);
-        req.body = { body, app: req.query.app };
+        req.body = { body, app };
         next();
     } catch (err) {
-        serviceIds.map(e => codeGen.removeOldFolder(e));
+        services.map(e => codeGen.removeOldFolder(e));
         logger.error('initCodeGen :: ', err);
         res.status(500).json({ message: err.message });
     }
@@ -180,7 +181,6 @@ async function schemaValidation(req, res, next) {
     try {
         const errors = [];
         let promises = req.body.body.map(async (item) => {
-            item.app = req.body.app;
             const temp = await dataServiceModel.patchOldRecord(item);
             if (temp.oldData) {
                 item.data = _.merge(temp.oldData, item.data);
@@ -190,10 +190,13 @@ async function schemaValidation(req, res, next) {
             if (!flag) {
                 delete item.oldData;
                 delete item.temp;
-                delete item.app;
-                let srvcId = item.dataService._id;
+                const srvcName = item.dataService.name;
+                const srvcApp = item.dataService.app;
                 delete item.dataService;
-                item.dataService = srvcId;
+                item.dataService = {
+                    name: srvcName,
+                    app: srvcApp
+                };
                 errors.push({ item, errors: schemaValidator.errors });
             }
             return item;

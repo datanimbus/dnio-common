@@ -12,9 +12,8 @@ const logger = log4js.getLogger(global.loggerName);
  * @param {*} req The Incoming Request Object
  * @param {*} data The data to encrypt
  */
-async function encryptText(req, data) {
+async function encryptText(req, app, data) {
     data = data.toString();
-    const app = req.query.app;
     var options = {
         url: config.baseUrlSEC + '/enc/' + app + '/encrypt',
         method: 'POST',
@@ -53,12 +52,11 @@ async function encryptText(req, data) {
  * @param {*} req The Incoming Request Object
  * @param {*} data The data to decrypt
  */
-async function decryptText(req, data) {
+async function decryptText(req, app, data) {
     if (!data) {
         data = req;
         req = undefined;
     }
-    const app = req.query.app;
     var options = {
         url: config.baseUrlSEC + '/enc/' + app + '/decrypt',
         method: 'POST',

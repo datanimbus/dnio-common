@@ -8,7 +8,7 @@ async function patchOldRecord(payload) {
     if (!(payload.operation === 'PUT' || payload.operation === 'DELETE')) {
         return payload;
     }
-    const dbname = config.namespace + '-' + payload.app;
+    const dbname = config.namespace + '-' + payload.dataService.app;
     const client = await MongoClient.connect(config.mongoDataUrl, config.mongoDataOptions);
     logger.info('Connected to ', dbname);
     const dataDB = client.db(dbname);
