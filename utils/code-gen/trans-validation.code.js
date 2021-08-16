@@ -85,11 +85,11 @@ async function genrateCode(config) {
 		}
 		code.push(`\ttry {`);
 		code.push(`\t\tlet id = null;`);
-		code.push(`\t\tlet doc = await counterCol.findOneAndUpdate({ _id: '${srvc.collectionName}' }, { $inc: { next: 1 } }, { upsert: true });`);
+		code.push(`\t\tlet doc = await counterCol.findOneAndUpdate({ _id: '${srvc.collectionName}' }, { $inc: { next: 1 } }, { upsert: true, returnDocument: 'after' });`);
 		if (idDetails.padding) {
-			code.push(`\t\tid = '${idDetails.prefix || ''}' + _.padStart(((doc.value.next + 1) + ''), ${idDetails.padding || 0}, '0') + '${idDetails.suffix || ''}';`);
+			code.push(`\t\tid = '${idDetails.prefix || ''}' + _.padStart((doc.value.next + ''), ${idDetails.padding || 0}, '0') + '${idDetails.suffix || ''}';`);
 		} else {
-			code.push(`\t\tid = '${idDetails.prefix || ''}' + (doc.value.next + 1) + '${idDetails.suffix || ''}';`);
+			code.push(`\t\tid = '${idDetails.prefix || ''}' + doc.value.next + '${idDetails.suffix || ''}';`);
 		}
 		code.push(`\t\tnewData._id = id;`);
 		code.push(`\t} catch (err) {`);
