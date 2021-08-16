@@ -52,6 +52,7 @@ function genrateCode(data) {
         code.push(`\tpostHookLog.headers = headers;`);
         code.push(`\tpostHookLog.properties = headers;`);
         code.push(`\tpostHookLog.docId = docId;`);
+        code.push(`\tpostHookLog.logs = [];`);
         code.push(`\tpostHookLog.data = {};`);
         code.push(`\tpostHookLog.data.old = oldData ? JSON.parse(JSON.stringify(oldData)) : null;`);
         code.push(`\tpostHookLog.data.new = newData ? JSON.parse(JSON.stringify(newData)) : null;`);
