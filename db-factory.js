@@ -31,6 +31,7 @@ global.falseBooleanValues = ['n', 'no', 'false', '0'];
 				logger.debug('Author DB Version :: ', dbVersion);
 				global.isTransactionAllowed = dbVersion && dbVersion >= '4.2.0';
 			}
+			require('./queue');
 			logger.info('Are MongoDb Transactions Allowed :: ', global.isTransactionAllowed);
 		});
 	} catch (e) {

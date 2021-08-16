@@ -16,6 +16,7 @@ let client = null;
 if (!client) {
 	logger.debug(`clusterName: ${clusterName}, clientId: ${clientId}, streamingConfig: ${JSON.stringify(streamingConfig)}`)
 	client = NATS.connect(clusterName, clientId, streamingConfig);
+	global.client = client;
 	client.on('error', function (err) {
 		logger.error(err.message);
 	});

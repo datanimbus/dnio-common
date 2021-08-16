@@ -9,7 +9,7 @@ function genrateCode(data) {
     code.push('const _ = require(\'lodash\');');
     code.push('');
     code.push('const config = require(\'../../config\');');
-    code.push('const queueMgmt = require(\'../../queue\');');
+    code.push('const { sendToQueue } = require(\'../../queue\');');
     code.push('');
     code.push('const logger = log4js.getLogger(global.loggerName);');
 
@@ -85,7 +85,7 @@ function genrateCode(data) {
 			code.push(`\t\ttry {`);
 			code.push(`\t\t\tawait db.collection(\`${data.app}.hook\`).insertOne(JSON.parse(JSON.stringify(temp)));`);
 			code.push(`\t\t\tlogger.debug(\`[\${txnId}] Post-Hook log :: \${newData._id}\`);`);
-            code.push(`\t\t\tqueueMgmt.sendToQueue(streamingPayload);`);
+            code.push(`\t\t\tsendToQueue(streamingPayload);`);
 			code.push(`\t\t} catch(err) {`);
 			code.push(`\t\t\tlogger.error(\`[\${txnId}] Post-Hook log :: \${newData._id} :: \${err.message}\`);`);
 			code.push(`\t\t}`);
