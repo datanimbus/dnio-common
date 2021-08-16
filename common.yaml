@@ -35,20 +35,20 @@ spec:
           image: '__docker_registry_server__/data.stack:common.__release__'
           ports:
             - containerPort: 3000
-          # livenessProbe:
-          #   httpGet:
-          #     path: /common/health/live
-          #     port: 10003
-          #   initialDelaySeconds: 10
-          #   periodSeconds: 10
-          #   timeoutSeconds: 60
-          # readinessProbe:
-          #   httpGet:
-          #     path: /common/health/ready
-          #     port: 10003
-          #   initialDelaySeconds: 10
-          #   periodSeconds: 10
-          #   timeoutSeconds: 60
+          livenessProbe:
+            httpGet:
+              path: /common/utils/health/live
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 60
+          readinessProbe:
+            httpGet:
+              path: /common/utils/health/ready
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 60
           envFrom:
           - configMapRef:
               name: config
