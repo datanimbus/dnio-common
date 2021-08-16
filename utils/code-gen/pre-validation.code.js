@@ -33,7 +33,7 @@ function genrateCode(data) {
 	}
 	code.push(`	try {`);
 	code.push(`		let id = null;`);
-	code.push(`		let doc = await counterCol.findOneAndUpdate({ _id: '${data.collectionName}' }, { $inc: { next: 1 } }, { upsert: true });`);
+	code.push(`		let doc = await counterCol.findOneAndUpdate({ _id: '${data.collectionName}' }, { $inc: { next: 1 } }, { upsert: true, returnDocument: 'after' });`);
 	if (idDetails.padding) {
 		code.push(`		id = '${idDetails.prefix || ''}' + _.padStart((doc.value.next + ''), ${idDetails.padding || 0}, '0') + '${idDetails.suffix || ''}';`);
 	} else {
