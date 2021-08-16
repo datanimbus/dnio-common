@@ -63,7 +63,7 @@ function genrateCode(config) {
                     code.push(`\t\tpayloads.push(payload);`);
                     code.push('\t}');
                 } else if (def.type == 'Object') {
-                    parseSchemaForRelation(def.definition, path);
+                    parseSchemaForCascade(def.definition, path);
                 } else if (def.type == 'Array') {
                     if (def.definition[0].properties.relatedTo) {
                         code.push(`\tlet ${_.camelCase(path)} = _.get(newData, '${path}') || [];`);
@@ -90,7 +90,7 @@ function genrateCode(config) {
                         code.push(`\tlet ${_.camelCase(path)} = _.get(newData, '${path}') || [];`);
                         code.push(`\tif (${_.camelCase(path)} && Array.isArray(${_.camelCase(path)}) && ${_.camelCase(path)}.length > 0) {`);
                         code.push(`\t\tlet promises = ${_.camelCase(path)}.map(async (newData, i) => {`);
-                        parseSchemaForRelation(def.definition[0].definition, '');
+                        parseSchemaForCascade(def.definition[0].definition, '');
                         code.push('\t\t});');
                         code.push('\t}');
                     }
