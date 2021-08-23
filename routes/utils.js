@@ -50,8 +50,18 @@ router.get('/swagger', async (req, res) => {
                 type: 'object',
                 properties: {
                     'dataService': {
-                        type: 'string',
-                        description: 'Data Service ID'
+                        type: 'object',
+                        description: 'Data Service Details',
+                        properties: {
+                            app: {
+                                type: 'string',
+                                description: 'The Data Service App'
+                            },
+                            name: {
+                                type: 'string',
+                                description: 'The Data Service Name'
+                            }
+                        }
                     },
                     'operation': {
                         type: 'string',
@@ -88,12 +98,6 @@ router.get('/swagger', async (req, res) => {
                         in: 'header',
                         type: 'string',
                         description: 'The JWT token for req validation'
-                    },
-                    {
-                        name: 'app',
-                        in: 'query',
-                        type: 'string',
-                        description: 'App for which the Data Services belongs'
                     }
                 ],
                 responses: {
