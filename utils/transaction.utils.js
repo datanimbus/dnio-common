@@ -48,9 +48,9 @@ async function executeTransaction(req, payload) {
                     item.data = _.merge(item.oldData, item.data);
                     require(path.join(item.dataService.folderPath, 'trans-validation.js')).validateCreateOnly(req, item.data, item.oldData);
                     if (_.has(item.data, '$inc') || _.has(item.data, '$mul')) {
-                        status = await dataDB.collection(item.dataService.collectionName).findOneAndUpdate({ _id: id }, { $set: item.data }, { session, upsert: item.upsert });
+                        status = await dataDB.collection(item.dataService.collectionName).findOneAndUpdate({ _id: id }, item.data, { session });
                     } else {
-                        status = await dataDB.collection(item.dataService.collectionName).findOneAndUpdate({ _id: id }, item.data, { session, upsert: item.upsert });
+                        status = await dataDB.collection(item.dataService.collectionName).findOneAndUpdate({ _id: id }, { $set: item.data }, { session, upsert: item.upsert });
                     }
                     status = await dataDB.collection(item.dataService.collectionName).findOneAndUpdate({ _id: id }, { $inc: { '_metadata.version.document': 1 } }, { session, returnDocument: 'after' });
                 } else if (item.operation === 'DELETE') {
