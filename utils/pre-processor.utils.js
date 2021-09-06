@@ -192,6 +192,16 @@ async function schemaValidation(req, res, next) {
             if (item.operation === 'PUT' && !item.upsert && !temp.oldData) {
                 errors.push({ item, errors: { message: 'Document does not exists.' } });
             }
+            if (item.dataService.stateModel && item.dataService.stateModel.enabled && item.operation === 'POST' &&
+                !item.dataService.stateModel.initialStates.includes(_.get(item.data, item.dataService.stateModel.attribute))) {
+                errors.push({ item, errors: { message: 'Record is not in initial state.' } });
+            }
+
+            if (item.dataService.stateModel && item.dataService.stateModel.enabled && item.operation === 'PUT'
+                && !item.dataService.stateModel.states[_.get(temp.oldData, item.dataService.stateModel.attribute)].includes(_.get(item.data, item.dataService.stateModel.attribute))
+                && _.get(temp.oldData, item.dataService.stateModel.attribute) !== _.get(item.data, item.dataService.stateModel.attribute)) {
+                errors.push({ item, errors: { message: 'State transition is not allowed.' } });
+            }
             // let flag = schemaValidator.validate(require(path.join(item.dataService.folderPath, 'schema.json')), item.data);
             let flag = schemaValidator.validate(schemaValidator.getSchema(item.dataService._id).schema, item.data);
             if (!flag) {
