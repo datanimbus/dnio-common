@@ -189,6 +189,9 @@ async function schemaValidation(req, res, next) {
             if (temp.oldData) {
                 item.data = _.merge(temp.oldData, item.data);
             }
+            if (item.operation === 'PUT' && !item.upsert && !temp.oldData) {
+                errors.push({ item, errors: { message: 'Document does not exists.' } });
+            }
             // let flag = schemaValidator.validate(require(path.join(item.dataService.folderPath, 'schema.json')), item.data);
             let flag = schemaValidator.validate(schemaValidator.getSchema(item.dataService._id).schema, item.data);
             if (!flag) {
