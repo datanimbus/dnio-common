@@ -183,6 +183,17 @@ async function preHookValidation(req, res, next) {
 
 async function schemaValidation(req, res, next) {
     try {
+        function cleanData(item) {
+            delete item.oldData;
+            delete item.temp;
+            const srvcName = item.dataService.name;
+            const srvcApp = item.dataService.app;
+            delete item.dataService;
+            item.dataService = {
+                name: srvcName,
+                app: srvcApp
+            };
+        }
         const errors = [];
         let promises = req.body.body.map(async (item) => {
             const temp = await dataServiceModel.patchOldRecord(item);
@@ -190,30 +201,25 @@ async function schemaValidation(req, res, next) {
                 item.data = _.merge(temp.oldData, item.data);
             }
             if (item.operation === 'PUT' && !item.upsert && !temp.oldData) {
+                cleanData(item);
                 errors.push({ item, errors: { message: 'Document does not exists.' } });
             }
             if (item.dataService.stateModel && item.dataService.stateModel.enabled && item.operation === 'POST' &&
                 !item.dataService.stateModel.initialStates.includes(_.get(item.data, item.dataService.stateModel.attribute))) {
+                cleanData(item);
                 errors.push({ item, errors: { message: 'Record is not in initial state.' } });
             }
 
             if (item.dataService.stateModel && item.dataService.stateModel.enabled && item.operation === 'PUT'
                 && !item.dataService.stateModel.states[_.get(temp.oldData, item.dataService.stateModel.attribute)].includes(_.get(item.data, item.dataService.stateModel.attribute))
                 && _.get(temp.oldData, item.dataService.stateModel.attribute) !== _.get(item.data, item.dataService.stateModel.attribute)) {
+                cleanData(item);
                 errors.push({ item, errors: { message: 'State transition is not allowed.' } });
             }
             // let flag = schemaValidator.validate(require(path.join(item.dataService.folderPath, 'schema.json')), item.data);
             let flag = schemaValidator.validate(schemaValidator.getSchema(item.dataService._id).schema, item.data);
             if (!flag) {
-                delete item.oldData;
-                delete item.temp;
-                const srvcName = item.dataService.name;
-                const srvcApp = item.dataService.app;
-                delete item.dataService;
-                item.dataService = {
-                    name: srvcName,
-                    app: srvcApp
-                };
+                cleanData(item);
                 errors.push({ item, errors: schemaValidator.errors });
             }
             return item;
