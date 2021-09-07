@@ -118,7 +118,7 @@ async function initCodeGen(req, res, next) {
     try {
         services = await dataServiceModel.findAllService({ $or: servicesFilter });
         if (servicesFilter.length !== services.length) {
-            return res.status(400).json({ message: 'One or more data service ID(s) are invalid' });
+            return res.status(400).json({ message: 'One or more data services are invalid' });
         }
 
         if (!services.every(e => e.status == 'Active')) {
