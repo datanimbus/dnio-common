@@ -27,7 +27,7 @@ async function basicValidation(req, res, next) {
             if ((item.operation === 'PUT' || item.operation === 'DELETE') && (!item.data || !item.data._id)) {
                 errors.push({ item, index, error: 'ID was not provided for ' + item.operation + ' operation' });
             }
-            if (item.operation === 'DELETE' && item.data && !item.data._id) {
+            if (item.operation === 'DELETE' && item.data && item.data._id) {
                 const id = item.data._id
                 item.data = { _id: id };
             }
