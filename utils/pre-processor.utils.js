@@ -204,10 +204,15 @@ async function schemaValidation(req, res, next) {
                 cleanData(item);
                 errors.push({ item, errors: { message: 'Document does not exists.' } });
             }
-            if (item.dataService.stateModel && item.dataService.stateModel.enabled && item.operation === 'POST' &&
-                !item.dataService.stateModel.initialStates.includes(_.get(item.data, item.dataService.stateModel.attribute))) {
-                cleanData(item);
-                errors.push({ item, errors: { message: 'Record is not in initial state.' } });
+            if (item.dataService.stateModel && item.dataService.stateModel.enabled && item.operation === 'POST') {
+                let stateValue = _.get(item.data, item.dataService.stateModel.attribute);
+                if (stateValue && !item.dataService.stateModel.initialStates.includes(stateValue)) {
+                    cleanData(item);
+                    errors.push({ item, errors: { message: 'Record is not in initial state.' } });
+                }
+                if (!stateValue) {
+                    _.set(item.data, item.dataService.stateModel.attribute, item.dataService.stateModel.initialStates[0]);
+                }
             }
 
             if (item.dataService.stateModel && item.dataService.stateModel.enabled && item.operation === 'PUT'
