@@ -119,8 +119,9 @@ async function hasManagePermission(req, filter) {
             logger.debug('UserID not found in request');
             throw new Error('UserID not found in request');
         }
+        const service = await global.authorDB.collection('services').findOne(filter).project({ _id: 1, name: 1 });
         const records = await global.authorDB.collection('userMgmt.roles').aggregate([
-            { $match: filter },
+            { $match: { _id: service._id } },
             { $unwind: '$roles' },
             { $unwind: '$roles.operations' },
             { $match: { 'roles.operations.method': { $in: ['POST', 'PUT', 'DELETE'] } } },
@@ -156,9 +157,9 @@ async function isPreventedByWorkflow(req, filter) {
             logger.debug('UserID not found in request');
             throw new Error('UserID not found in request');
         }
-
+        const service = await global.authorDB.collection('services').findOne(filter).project({ _id: 1, name: 1 });
         let records = await global.authorDB.collection('userMgmt.roles').aggregate([
-            { $match: filter },
+            { $match: { _id: service._id } },
             { $unwind: '$roles' },
             { $unwind: '$roles.operations' },
             { $match: { 'roles.operations.method': 'REVIEW' } }
@@ -167,7 +168,7 @@ async function isPreventedByWorkflow(req, filter) {
             return false;
         }
         records = await global.authorDB.collection('userMgmt.roles').aggregate([
-            { $match: filter },
+            { $match: { _id: service._id } },
             { $unwind: '$roles' },
             { $unwind: '$roles.operations' },
             { $match: { 'roles.operations.method': 'SKIP_REVIEW' } },
