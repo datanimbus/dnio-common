@@ -73,6 +73,7 @@ e.baseUrlSEC = get('sec') + '/sec';
 e.baseUrlDM = get('dm') + '/dm';
 e.baseUrlPM = get('pm') + '/pm';
 e.baseUrlGW = get('gw');
+e.TOKEN_SECRET = process.env.TOKEN_SECRET || 'u?5k167v13w5fhjhuiweuyqi67621gqwdjavnbcvadjhgqyuqagsduyqtw87e187etqiasjdbabnvczmxcnkzn';
 
 
 function get(_service) {

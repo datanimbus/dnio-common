@@ -9,8 +9,9 @@ const log4js = require('log4js');
 const express = require('express');
 
 const config = require('./config');
-const dbFactory = require('./db-factory');
-const preProcessor = require('./utils/pre-processor.utils');
+require('./db-factory');
+// const preProcessor = require('./utils/pre-processor.utils');
+const { AuthCacheMW } = require('@appveen/ds-auth-cache');
 
 const LOGGER_NAME = config.isK8sEnv() ? `[${config.hostname}] [COMMON v${config.imageTag}]` : `[COMMON v${config.imageTag}]`
 const logger = log4js.getLogger(LOGGER_NAME);
@@ -40,7 +41,8 @@ app.use((req, res, next) => {
     next();
 });
 
-app.use(preProcessor.patchUserData);
+// app.use(preProcessor.patchUserData);
+app.use(AuthCacheMW({ secret: config.TOKEN_SECRET, decodeOnly: true }));
 
 app.use('/api/common', require('./routes'));
 

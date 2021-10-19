@@ -20,6 +20,7 @@ async function encryptText(req, app, data) {
         headers: {
             'txnId': req ? req.headers[global.txnIdHeader] : '',
             'user': req ? req.headers[global.userHeader] : '',
+            'authorization': req ? req.headers['authorization'] : '',
             'Content-Type': 'application/json',
         },
         json: { data },
@@ -63,6 +64,7 @@ async function decryptText(req, app, data) {
         headers: {
             'txnId': req ? req.headers[global.txnIdHeader] : '',
             'user': req ? req.headers[global.userHeader] : '',
+            'authorization': req ? req.headers['authorization'] : '',
             'Content-Type': 'application/json',
         },
         json: { data },

@@ -78,7 +78,8 @@ async function isWorkflowEnabled(req, filter) {
  */
 async function hasSkipReview(req, filter) {
     try {
-        const userId = req.headers[global.userHeader];
+        // const userId = req.headers[global.userHeader];
+        const userId = req.user ? req.user._id : null;
         if (!userId) {
             logger.debug('UserID not found in request');
             throw new Error('UserID not found in request');
@@ -114,7 +115,8 @@ async function hasSkipReview(req, filter) {
  */
 async function hasManagePermission(req, filter) {
     try {
-        const userId = req.headers[global.userHeader];
+        // const userId = req.headers[global.userHeader];
+        const userId = req.user ? req.user._id : null;
         if (!userId) {
             logger.debug('UserID not found in request');
             throw new Error('UserID not found in request');
@@ -152,7 +154,8 @@ async function hasManagePermission(req, filter) {
  */
 async function isPreventedByWorkflow(req, filter) {
     try {
-        const userId = req.headers[global.userHeader];
+        // const userId = req.headers[global.userHeader];
+        const userId = req.user ? req.user._id : null;
         if (!userId) {
             logger.debug('UserID not found in request');
             throw new Error('UserID not found in request');

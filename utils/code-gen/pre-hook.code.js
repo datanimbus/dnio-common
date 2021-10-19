@@ -38,7 +38,8 @@ function genrateCode(data) {
 		code.push(`\tpayload.trigger = {};`);
 		code.push(`\tpayload.operation = options.operation;`);
 		code.push(`\tpayload.txnId = req.headers[global.txnIdHeader];`);
-		code.push(`\tpayload.user = req.headers[global.userHeader];`);
+		// code.push(`\tpayload.user = req.headers[global.userHeader];`);
+		code.push(`\tpayload.user = req.user ? req.user._id : req.headers[global.userHeader];`);
 		code.push(`\tpayload.trigger.source = options.source;`);
 		code.push(`\tpayload.trigger.simulate = options.simulate;`);
 		code.push(`\tpayload.service = {`);
@@ -54,7 +55,8 @@ function genrateCode(data) {
 		code.push(`\tpreHookLog.headers = headers;`);
 		code.push(`\tpreHookLog.properties = headers;`);
 		code.push(`\tpreHookLog._id = crypto.randomBytes(16).toString('hex');`);
-		code.push(`\tpreHookLog.user = req.headers[global.userHeader];`);
+		// code.push(`\tpreHookLog.user = req.headers[global.userHeader];`);
+		code.push(`\tpreHookLog.user = req.user ? req.user._id : req.headers[global.userHeader];`);
 		code.push(`\tpreHookLog.txnId = req.headers[global.txnIdHeader];`);
 		code.push(`\tpreHookLog.status = 'Initiated';`);
 		code.push(`\tpreHookLog.retry = 0;`);
@@ -111,7 +113,7 @@ function genrateCode(data) {
 			code.push(`\t\tif (${!data.disableInsights} && preHookLog && preHookLog._id) {`);
 			code.push(`\t\t\tpreHookLog._metadata = {};`);
 			code.push(`\t\t\tpreHookLog._metadata.createdAt = new Date();`);
-			code.push(`\t\t\tpreHookLog._metadata.lastUpdated = new Date();`);	
+			code.push(`\t\t\tpreHookLog._metadata.lastUpdated = new Date();`);
 			code.push(`\t\t\ttry {`);
 			code.push(`\t\t\t\tawait db.collection(\`${data.app}.hook\`).insertOne(JSON.parse(JSON.stringify(preHookLog)));`);
 			code.push(`\t\t\t\tlogger.debug(\`[\${txnId}] Pre-Hook log :: \${newData._id}\`);`);

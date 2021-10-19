@@ -32,7 +32,8 @@ function genrateCode(data) {
         });
         code.push(`\tlet docId = newData._id || (oldData ? oldData._id : null) || null;`);
         code.push(`\tlet txnId = req.headers[global.txnIdHeader];`);
-        code.push(`\tlet userId = req.headers[global.userHeader];`);
+        // code.push(`\tlet userId = req.headers[global.userHeader];`);
+        code.push(`\tlet userId = req.user ? req.user._id : req.headers[global.userHeader];`);
         code.push(`\tconst postHookLog = {};`);
         code.push(`\tpostHookLog.user = userId;`);
         code.push(`\tpostHookLog.txnId = txnId;`);
@@ -80,17 +81,17 @@ function genrateCode(data) {
             code.push(`\ttemp['hookType'] = ('${hook.type}' || 'external');;`);
             code.push(`\ttemp['refId'] = '${hook.refId}';`);
             code.push(`\tif (${!data.disableInsights} && temp && temp._id) {`);
-			code.push(`\t\ttemp._metadata = {};`);
-			code.push(`\t\ttemp._metadata.createdAt = new Date();`);
-			code.push(`\t\ttemp._metadata.lastUpdated = new Date();`);	
-			code.push(`\t\ttry {`);
-			code.push(`\t\t\tawait db.collection(\`${data.app}.hook\`).insertOne(JSON.parse(JSON.stringify(temp)));`);
-			code.push(`\t\t\tlogger.debug(\`[\${txnId}] Post-Hook log :: \${newData._id}\`);`);
+            code.push(`\t\ttemp._metadata = {};`);
+            code.push(`\t\ttemp._metadata.createdAt = new Date();`);
+            code.push(`\t\ttemp._metadata.lastUpdated = new Date();`);
+            code.push(`\t\ttry {`);
+            code.push(`\t\t\tawait db.collection(\`${data.app}.hook\`).insertOne(JSON.parse(JSON.stringify(temp)));`);
+            code.push(`\t\t\tlogger.debug(\`[\${txnId}] Post-Hook log :: \${newData._id}\`);`);
             code.push(`\t\t\tsendToQueue(streamingPayload);`);
-			code.push(`\t\t} catch(err) {`);
-			code.push(`\t\t\tlogger.error(\`[\${txnId}] Post-Hook log :: \${newData._id} :: \${err.message}\`);`);
-			code.push(`\t\t}`);
-			code.push(`\t}`);
+            code.push(`\t\t} catch(err) {`);
+            code.push(`\t\t\tlogger.error(\`[\${txnId}] Post-Hook log :: \${newData._id} :: \${err.message}\`);`);
+            code.push(`\t\t}`);
+            code.push(`\t}`);
         });
         code.push(`\tclient.close(true);`);
     }
