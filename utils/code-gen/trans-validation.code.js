@@ -136,6 +136,28 @@ async function genrateCode(config) {
 	code.push('}');
 	code.push('');
 
+	/**------------------------ UNIQUE ----------------------- */
+	code.push('/**');
+	code.push(' * @param {*} req The Incomming Request Object');
+	code.push(' * @param {*} newData The New Document Object');
+	code.push(' * @param {*} oldData The Old Document Object');
+	code.push(' * @returns {Promise<object>} Returns Promise of null if no validation error, else and error object with invalid paths');
+	code.push(' */');
+	code.push('async function validateUnique(req, newData, oldData, db, session) {');
+	code.push('\tconst errors = {};');
+	code.push(`\tconst col = db.collection('${config.collectionName}');`);
+	code.push('\tlet val;');
+	code.push('\ttry {');
+	parseSchemaForUnique(schema);
+	code.push('\t} catch(err) {');
+	code.push('\t\tlogger.error(\'validateUnique\', err);');
+	code.push('\t\terrors[\'global\'] = err;');
+	code.push('\t} finally {');
+	code.push('\t\treturn Object.keys(errors).length > 0 ? errors : null;');
+	code.push('\t}');
+	code.push('}');
+	code.push('');
+
 
 	/**------------------------ CREATE CASCADE PAYLOAD ----------------------- */
 	code.push('async function genrateDocumentId(serviceID) {');
@@ -152,6 +174,7 @@ async function genrateCode(config) {
 	code.push('module.exports.validateCreateOnly = validateCreateOnly;');
 	code.push('module.exports.validateRelation = validateRelation;');
 	code.push('module.exports.genrateDocumentId = genrateDocumentId;');
+	code.push('module.exports.validateUnique = validateUnique;');
 
 
 	return code.join('\n');
@@ -250,6 +273,38 @@ async function genrateCode(config) {
 						// code.push(`\t\t\tdelete newData['${path}'];`);
 						code.push(`\t\t\t\t\t_.set(newData, '${path}', _.get(oldData, '${path}'));`);
 						code.push('\t\t}');
+					}
+				}
+			}
+		});
+	}
+
+	function parseSchemaForUnique(schema, parentKey) {
+		schema.forEach(def => {
+			let key = def.key;
+			const path = parentKey ? parentKey + '.' + key : key;
+			if (key != '_id' && def.properties) {
+				if (def.type == 'Object') {
+					parseSchemaForUnique(def.definition, path);
+				} else if (def.type == 'Array') {
+					// code.push(`\t if((_.get(newData,'${path}')||[]).length !== (_.get(newData,'${path}')||[]).length) {`);
+					// code.push(`\t\t errors.${path} = true;`);
+					// code.push(`\t }`);
+					// code.push(`\t for(let i=0;i<newData.${path};i++){`);
+					// code.push(`\t\t const item = newData.${path}[i];`);
+					// parseSchemaForUnique(def.definition, path);
+					// code.push(`\t }`);
+				} else {
+					if (def.properties.unique) {
+						code.push(`\tval = _.get(newData, '${path}');`);
+						code.push('\tif (val) {');
+						code.push(`\t\tlet query = { '${path}': val };`);
+						code.push('\t\tif(oldData) query[\'_id\'] = {\'$ne\': oldData._id};');
+						code.push('\t\tconst doc = await col.find(query, { session }).collation({ locale: \'en\', strength: 2 }).toArray();');
+						code.push('\t\tif (doc && doc.length > 0) {');
+						code.push(`\t\t\terrors['${path}'] = '${path} field should be unique';`);
+						code.push('\t\t}');
+						code.push('\t}');
 					}
 				}
 			}

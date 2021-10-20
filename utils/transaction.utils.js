@@ -36,6 +36,10 @@ async function executeTransaction(req, payload) {
                 // if (item.operation === 'POST' || item.operation === 'PUT') {
                 //     await require(path.join(item.dataService.folderPath, 'trans-validation.js')).createCascadeData(req, item, dataDB, session);
                 // }
+                const errors = await require(path.join(item.dataService.folderPath, 'trans-validation.js')).validateUnique(req, item.data, item.oldData, dataDB, session);
+                if (errors) {
+                    throw { message: errors };
+                }
                 if (item.operation === 'POST') {
                     item.data._metadata.createdAt = new Date();
                     item.data._metadata.version.document = 1;
