@@ -230,7 +230,7 @@ async function schemaValidation(req, res, next) {
                     } else {
                         let oldStateValue = _.get(temp.oldData, item.dataService.stateModel.attribute);
                         let oldState = item.dataService.stateModel.states[oldStateValue];
-                        if (newStateValue != oldStateValue || !oldState || !oldState.includes(newStateValue)) {
+                        if (newStateValue != oldStateValue && (!oldState || !oldState.includes(newStateValue))) {
                             cleanData(item);
                             errors.push({ item, errors: { message: 'State transition is not allowed.' } });
                         }
