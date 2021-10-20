@@ -145,8 +145,8 @@ function genrateCode(data) {
 	/**------------------------ METHODS ----------------------- */
 	code.push('module.exports = async function(req, item) {');
 	code.push('\tlet errors = {};');
-	code.push('\terrors = await validateUnique(req, item.data, item.oldData);');
-	code.push('\tif (errors && Object.keys(errors).length > 0) return errors;');
+	// code.push('\terrors = await validateUnique(req, item.data, item.oldData);');
+	// code.push('\tif (errors && Object.keys(errors).length > 0) return errors;');
 	code.push('\terrors = await encryptSecureFields(req, item.data, item.oldData);');
 	code.push('\tif (errors && Object.keys(errors).length > 0) return errors;');
 	code.push('\terrors = await fixBoolean(req, item.data, item.oldData);');
