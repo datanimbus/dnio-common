@@ -204,28 +204,43 @@ async function schemaValidation(req, res, next) {
                 cleanData(item);
                 errors.push({ item, errors: { message: 'Document does not exists.' } });
             }
-            if (item.dataService.stateModel && item.dataService.stateModel.enabled && item.operation === 'POST') {
-                let stateValue = _.get(item.data, item.dataService.stateModel.attribute);
-                if (stateValue && !item.dataService.stateModel.initialStates.includes(stateValue)) {
-                    cleanData(item);
-                    errors.push({ item, errors: { message: 'Record is not in initial state.' } });
+            // State Model Code
+            if (item.dataService.stateModel && item.dataService.stateModel.enabled) {
+                let newStateValue = _.get(item.data, item.dataService.stateModel.attribute);
+                if (item.operation === 'POST') {
+                    if (newStateValue && !item.dataService.stateModel.initialStates.includes(newStateValue)) {
+                        cleanData(item);
+                        errors.push({ item, errors: { message: 'Record is not in initial state.' } });
+                    }
+                    if (!newStateValue) {
+                        _.set(item.data, item.dataService.stateModel.attribute, item.dataService.stateModel.initialStates[0]);
+                    }
                 }
-                if (!stateValue) {
-                    _.set(item.data, item.dataService.stateModel.attribute, item.dataService.stateModel.initialStates[0]);
-                }
-            }
 
-            if (item.dataService.stateModel && item.dataService.stateModel.enabled && item.operation === 'PUT'
-                && !item.dataService.stateModel.states[_.get(temp.oldData, item.dataService.stateModel.attribute)].includes(_.get(item.data, item.dataService.stateModel.attribute))
-                && _.get(temp.oldData, item.dataService.stateModel.attribute) !== _.get(item.data, item.dataService.stateModel.attribute)) {
-                cleanData(item);
-                errors.push({ item, errors: { message: 'State transition is not allowed.' } });
+                if (item.operation === 'PUT') {
+                    if (!temp.oldData) {
+                        if (newStateValue && !item.dataService.stateModel.initialStates.includes(newStateValue)) {
+                            cleanData(item);
+                            errors.push({ item, errors: { message: 'Record is not in initial state.' } });
+                        }
+                        if (!newStateValue) {
+                            _.set(item.data, item.dataService.stateModel.attribute, item.dataService.stateModel.initialStates[0]);
+                        }
+                    } else {
+                        let oldStateValue = _.get(temp.oldData, item.dataService.stateModel.attribute);
+                        let oldState = item.dataService.stateModel.states[oldStateValue];
+                        if (newStateValue != oldStateValue && (!oldState || !oldState.includes(newStateValue))) {
+                            cleanData(item);
+                            errors.push({ item, errors: { message: 'State transition is not allowed.' } });
+                        }
+                    }
+                }
             }
             // let flag = schemaValidator.validate(require(path.join(item.dataService.folderPath, 'schema.json')), item.data);
             let flag = schemaValidator.validate(schemaValidator.getSchema(item.dataService._id).schema, item.data);
             if (!flag) {
                 cleanData(item);
-                errors.push({ item, errors: schemaValidator.errors });
+                errors.push({ item, errors: schemaValidator.errors.map(e => e.message) });
             }
             return item;
         });
