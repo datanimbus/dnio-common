@@ -119,7 +119,7 @@ async function hasManagePermission(req, filter) {
             logger.debug('UserID not found in request');
             throw new Error('UserID not found in request');
         }
-        const service = await global.authorDB.collection('services').findOne(filter).project({ _id: 1, name: 1 });
+        const service = await global.authorDB.collection('services').findOne(filter);
         const records = await global.authorDB.collection('userMgmt.roles').aggregate([
             { $match: { _id: service._id } },
             { $unwind: '$roles' },
@@ -157,7 +157,7 @@ async function isPreventedByWorkflow(req, filter) {
             logger.debug('UserID not found in request');
             throw new Error('UserID not found in request');
         }
-        const service = await global.authorDB.collection('services').findOne(filter).project({ _id: 1, name: 1 });
+        const service = await global.authorDB.collection('services').findOne(filter);
         let records = await global.authorDB.collection('userMgmt.roles').aggregate([
             { $match: { _id: service._id } },
             { $unwind: '$roles' },
