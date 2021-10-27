@@ -276,7 +276,7 @@ function genrateCode(data) {
 					code.push('\t} catch (e) {');
 					code.push(`\t\terrors['${path}'] = e.message ? e.message : e;`);
 					code.push('\t}');
-					code.push(`\t_.set(newData, '${path}', ${_.camelCase(path)});`);
+					// code.push(`\t_.set(newData, '${path}', ${_.camelCase(path)});`);
 				} else if (def.type == 'Object') {
 					parseSchemaForBoolean(def.definition, path);
 				} else if (def.type == 'Array') {
@@ -301,7 +301,7 @@ function genrateCode(data) {
 						code.push('\t\t\t}');
 						code.push('\t\t});');
 						code.push('\t}');
-						code.push(`\t_.set(newData, '${path}', ${_.camelCase(path)});`);
+						// code.push(`\t_.set(newData, '${path}', ${_.camelCase(path)});`);
 					} else if (def.definition[0].type == 'Object') {
 						code.push(`\tlet ${_.camelCase(path)} = _.get(newData, '${path}') || [];`);
 						code.push(`\tif (${_.camelCase(path)} && Array.isArray(${_.camelCase(path)}) && ${_.camelCase(path)}.length > 0) {`);
@@ -309,7 +309,7 @@ function genrateCode(data) {
 						parseSchemaForBoolean(def.definition[0].definition, '');
 						code.push('\t\t});');
 						code.push('\t}');
-						code.push(`\t_.set(newData, '${path}', ${_.camelCase(path)});`);
+						// code.push(`\t_.set(newData, '${path}', ${_.camelCase(path)});`);
 					}
 				}
 			}
