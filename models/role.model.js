@@ -1,4 +1,5 @@
 const log4js = require('log4js');
+const _ = require('lodash');
 
 const logger = log4js.getLogger(global.loggerName);
 
@@ -122,25 +123,37 @@ async function hasManagePermission(req, filter) {
             throw new Error('UserID not found in request');
         }
         const service = await global.authorDB.collection('services').findOne(filter);
-        const records = await global.authorDB.collection('userMgmt.roles').aggregate([
-            { $match: { _id: service._id } },
-            { $unwind: '$roles' },
-            { $unwind: '$roles.operations' },
-            { $match: { 'roles.operations.method': { $in: ['POST', 'PUT', 'DELETE'] } } },
-            {
-                $lookup: {
-                    from: 'userMgmt.groups',
-                    localField: 'roles.id',
-                    foreignField: 'roles.id',
-                    as: 'groups'
-                }
-            },
-            { $match: { 'groups.users': userId } },
-        ]).toArray();
-        if (records && records.length > 1) {
-            return true;
+        const permIds = service.role.roles.filter(r => _.intersection(r.operations.map(ro => ro.method), ['PUT', 'POST', 'DELETE']).length == 3).map(e => e.id);
+
+        if (req.user && req.user.allPermissions) {
+            const permissions = ((req.user.allPermissions.find(e => e.app == filter.app) || {}).permissions) || [];
+            if (permissions.indexOf(`ADMIN_${service._id}`) > -1) {
+                return true;
+            }
+            if (_.intersection(permissions, permIds).length > 0) {
+                return true;
+            }
         }
         return false;
+        // const records = await global.authorDB.collection('userMgmt.roles').aggregate([
+        //     { $match: { _id: service._id } },
+        //     { $unwind: '$roles' },
+        //     { $unwind: '$roles.operations' },
+        //     { $match: { 'roles.operations.method': { $in: ['POST', 'PUT', 'DELETE'] } } },
+        //     {
+        //         $lookup: {
+        //             from: 'userMgmt.groups',
+        //             localField: 'roles.id',
+        //             foreignField: 'roles.id',
+        //             as: 'groups'
+        //         }
+        //     },
+        //     { $match: { 'groups.users': userId } },
+        // ]).toArray();
+        // if (records && records.length > 1) {
+        //     return true;
+        // }
+        // return false;
     } catch (err) {
         logger.error(err);
         throw err;
@@ -161,34 +174,46 @@ async function isPreventedByWorkflow(req, filter) {
             throw new Error('UserID not found in request');
         }
         const service = await global.authorDB.collection('services').findOne(filter);
-        let records = await global.authorDB.collection('userMgmt.roles').aggregate([
-            { $match: { _id: service._id } },
-            { $unwind: '$roles' },
-            { $unwind: '$roles.operations' },
-            { $match: { 'roles.operations.method': 'REVIEW' } }
-        ]).toArray();
-        if (!records || records.length == 0) {
+
+        if (!service.workflowConfig.enabled) {
             return false;
         }
-        records = await global.authorDB.collection('userMgmt.roles').aggregate([
-            { $match: { _id: service._id } },
-            { $unwind: '$roles' },
-            { $unwind: '$roles.operations' },
-            { $match: { 'roles.operations.method': 'SKIP_REVIEW' } },
-            {
-                $lookup: {
-                    from: 'userMgmt.groups',
-                    localField: 'roles.id',
-                    foreignField: 'roles.id',
-                    as: 'groups'
-                }
-            },
-            { $match: { 'groups.users': userId } },
-        ]).toArray();
-        if (records && records.length > 0) {
-            return false;
+        if (req.user && req.user.allPermissions) {
+            const permissions = ((req.user.allPermissions.find(e => e.app == filter.app) || {}).permissions) || [];
+            if (permissions.indexOf(`ADMIN_${service._id}`) > -1) {
+                return true;
+            }
         }
-        return true;
+        return false;
+
+        // let records = await global.authorDB.collection('userMgmt.roles').aggregate([
+        //     { $match: { _id: service._id } },
+        //     { $unwind: '$roles' },
+        //     { $unwind: '$roles.operations' },
+        //     { $match: { 'roles.operations.method': 'REVIEW' } }
+        // ]).toArray();
+        // if (!records || records.length == 0) {
+        //     return false;
+        // }
+        // records = await global.authorDB.collection('userMgmt.roles').aggregate([
+        //     { $match: { _id: service._id } },
+        //     { $unwind: '$roles' },
+        //     { $unwind: '$roles.operations' },
+        //     { $match: { 'roles.operations.method': 'SKIP_REVIEW' } },
+        //     {
+        //         $lookup: {
+        //             from: 'userMgmt.groups',
+        //             localField: 'roles.id',
+        //             foreignField: 'roles.id',
+        //             as: 'groups'
+        //         }
+        //     },
+        //     { $match: { 'groups.users': userId } },
+        // ]).toArray();
+        // if (records && records.length > 0) {
+        //     return false;
+        // }
+        // return true;
     } catch (err) {
         logger.error(err);
         throw err;
