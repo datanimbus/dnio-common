@@ -122,6 +122,9 @@ async function hasManagePermission(req, filter) {
             logger.debug('UserID not found in request');
             throw new Error('UserID not found in request');
         }
+        if (req.user && req.user.apps && req.user.apps.indexOf(filter.app) > -1) {
+            return true;
+        }
         const service = await global.authorDB.collection('services').findOne(filter);
         const permIds = service.role.roles.filter(r => _.intersection(r.operations.map(ro => ro.method), ['PUT', 'POST', 'DELETE']).length == 3).map(e => e.id);
 
