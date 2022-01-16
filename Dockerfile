@@ -9,6 +9,7 @@ RUN npm i --production
 COPY . .
 
 ENV NODE_ENV="production"
+ENV IMAGE_TAG=__image_tag__
 
 EXPOSE 3000
 EXPOSE 3443
