@@ -5,7 +5,9 @@ const path = require('path');
 const log4js = require('log4js');
 const crypto = require('crypto');
 const { Worker } = require('worker_threads');
+
 const config = require('../config');
+const httpClient = require('../http-client');
 
 const logger = log4js.getLogger(global.loggerName);
 
