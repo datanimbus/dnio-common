@@ -78,7 +78,7 @@ async function getKeys(app) {
 			headers: {
 				'Content-Type': 'application/json',
 			},
-			json: true
+			responseType: 'json'
 		};
 		const res = await httpClient.httpRequest(options);
 		if (res.statusCode === 200) {
