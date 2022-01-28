@@ -5,6 +5,7 @@ const path = require('path');
 const log4js = require('log4js');
 const crypto = require('crypto');
 const { Worker } = require('worker_threads');
+const config = require('../config');
 
 const logger = log4js.getLogger(global.loggerName);
 
@@ -70,7 +71,7 @@ async function getKeys(app) {
 	try {
 		logger.trace('Ping USER service');
 		const options = {
-			url: config.baseUrlUSR + '/' + config.app + '/keys',
+			url: config.baseUrlUSR + '/' + app + '/keys',
 			method: 'GET',
 			headers: {
 				'Content-Type': 'application/json',
