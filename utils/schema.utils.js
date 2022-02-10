@@ -235,7 +235,6 @@ function getGeoJSONSchema() {
 function getFileSchema() {
     const required = [
         "length",
-        "chunkSize",
         "uploadDate",
         "filename",
         "md5",
