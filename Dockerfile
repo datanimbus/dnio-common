@@ -1,10 +1,11 @@
-FROM node:14-alpine
+FROM node:16-alpine
 
 WORKDIR /app
 
 COPY package.json package.json
 
 RUN npm i --production
+RUN npm audit fix
 
 COPY . .
 
