@@ -4,8 +4,10 @@ const _ = require('lodash');
 
 const config = require('../config');
 const httpClient = require('../http-client');
+const secUtils = require('./security-utils');
 
 const logger = log4js.getLogger(global.loggerName);
+
 
 /**
  * 
@@ -14,32 +16,14 @@ const logger = log4js.getLogger(global.loggerName);
  */
 async function encryptText(req, app, data) {
     data = data.toString();
-    var options = {
-        url: config.baseUrlSEC + '/enc/' + app + '/encrypt',
-        method: 'POST',
-        headers: {
-            'txnId': req ? req.headers[global.txnIdHeader] : '',
-            'user': req ? req.headers[global.userHeader] : '',
-            'authorization': req ? req.headers['authorization'] : '',
-            'Content-Type': 'application/json',
-        },
-        json: { data },
-        responseType: 'json'
-    };
     try {
-        const res = await httpClient.httpRequest(options);
-        if (!res) {
-            logger.error(`[${req.headers[global.txnIdHeader]}] Security service down`);
-            throw new Error('Security service down');
-        }
+        const res = await secUtils.encryptText(req, app, data);
         if (res.statusCode === 200) {
             return {
                 value: res.body.data,
                 checksum: crypto.createHash('md5').update(data).digest('hex')
             };
         } else {
-            logger.error(`[${req.headers[global.txnIdHeader]}] Error response code from security service :: `, res.statusCode);
-            logger.error(`[${req.headers[global.txnIdHeader]}] Error response from security service :: `, res.body);
             throw new Error('Error encrypting text');
         }
     } catch (e) {
@@ -58,24 +42,8 @@ async function decryptText(req, app, data) {
         data = req;
         req = undefined;
     }
-    var options = {
-        url: config.baseUrlSEC + '/enc/' + app + '/decrypt',
-        method: 'POST',
-        headers: {
-            'txnId': req ? req.headers[global.txnIdHeader] : '',
-            'user': req ? req.headers[global.userHeader] : '',
-            'authorization': req ? req.headers['authorization'] : '',
-            'Content-Type': 'application/json',
-        },
-        json: { data },
-        responseType: 'json'
-    };
     try {
-        const res = await httpClient.httpRequest(options);
-        if (!res) {
-            logger.error(`[${req.headers[global.txnIdHeader]}] Security service down`);
-            throw new Error('Security service down');
-        }
+        const res = await secUtils.decryptText(req, app, data);
         if (res.statusCode === 200) {
             return res.body.data;
         } else {
@@ -86,6 +54,86 @@ async function decryptText(req, app, data) {
         throw e;
     }
 }
+
+// /**
+//  * 
+//  * @param {*} req The Incoming Request Object
+//  * @param {*} data The data to encrypt
+//  */
+// async function encryptText(req, app, data) {
+//     data = data.toString();
+//     var options = {
+//         url: config.baseUrlSEC + '/enc/' + app + '/encrypt',
+//         method: 'POST',
+//         headers: {
+//             'txnId': req ? req.headers[global.txnIdHeader] : '',
+//             'user': req ? req.headers[global.userHeader] : '',
+//             'authorization': req ? req.headers['authorization'] : '',
+//             'Content-Type': 'application/json',
+//         },
+//         json: { data },
+//         responseType: 'json'
+//     };
+//     try {
+//         const res = await httpClient.httpRequest(options);
+//         if (!res) {
+//             logger.error(`[${req.headers[global.txnIdHeader]}] Security service down`);
+//             throw new Error('Security service down');
+//         }
+//         if (res.statusCode === 200) {
+//             return {
+//                 value: res.body.data,
+//                 checksum: crypto.createHash('md5').update(data).digest('hex')
+//             };
+//         } else {
+//             logger.error(`[${req.headers[global.txnIdHeader]}] Error response code from security service :: `, res.statusCode);
+//             logger.error(`[${req.headers[global.txnIdHeader]}] Error response from security service :: `, res.body);
+//             throw new Error('Error encrypting text');
+//         }
+//     } catch (e) {
+//         logger.error(`[${req.headers[global.txnIdHeader]}] Error requesting Security service`, e);
+//         throw e;
+//     }
+// }
+
+// /**
+//  * 
+//  * @param {*} req The Incoming Request Object
+//  * @param {*} data The data to decrypt
+//  */
+// async function decryptText(req, app, data) {
+//     if (!data) {
+//         data = req;
+//         req = undefined;
+//     }
+//     var options = {
+//         url: config.baseUrlSEC + '/enc/' + app + '/decrypt',
+//         method: 'POST',
+//         headers: {
+//             'txnId': req ? req.headers[global.txnIdHeader] : '',
+//             'user': req ? req.headers[global.userHeader] : '',
+//             'authorization': req ? req.headers['authorization'] : '',
+//             'Content-Type': 'application/json',
+//         },
+//         json: { data },
+//         responseType: 'json'
+//     };
+//     try {
+//         const res = await httpClient.httpRequest(options);
+//         if (!res) {
+//             logger.error(`[${req.headers[global.txnIdHeader]}] Security service down`);
+//             throw new Error('Security service down');
+//         }
+//         if (res.statusCode === 200) {
+//             return res.body.data;
+//         } else {
+//             throw new Error('Error decrypting text');
+//         }
+//     } catch (e) {
+//         logger.error(`[${req ? req.headers[global.txnIdHeader] : ''}] Error requesting Security service :: `, e.message ? e.message : (e.body ? e.body : e));
+//         throw e;
+//     }
+// }
 
 /**
  * 
