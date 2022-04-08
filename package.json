@@ -20,7 +20,7 @@
     "@appveen/data.stack-utils": "^1.0.17",
     "@appveen/ds-auth-cache": "^1.0.0",
     "ajv": "^6.12.6",
-    "express": "^4.17.1",
+    "express": "^4.17.3",
     "got": "^11.8.2",
     "lodash": "^4.17.21",
     "log4js": "^6.3.0",
