@@ -34,17 +34,17 @@ e.streamingConfig = {
 e.mongoAuthorOptions = {
     useUnifiedTopology: true,
     useNewUrlParser: true,
-    minSize: process.env.MONGO_CONNECTION_POOL_SIZE || 5,
+    minPoolSize: process.env.MONGO_CONNECTION_POOL_SIZE || 5,
 };
 e.mongoDataOptions = {
     useUnifiedTopology: true,
     useNewUrlParser: true,
-    minSize: process.env.MONGO_CONNECTION_POOL_SIZE || 5,
+    minPoolSize: process.env.MONGO_CONNECTION_POOL_SIZE || 5,
 };
 e.mongoLogsOptions = {
     useUnifiedTopology: true,
     useNewUrlParser: true,
-    minSize: process.env.MONGO_CONNECTION_POOL_SIZE || 5,
+    minPoolSize: process.env.MONGO_CONNECTION_POOL_SIZE || 5,
     dbName: process.env.MONGO_LOGS_DBNAME || 'datastackLogs'
 };
 
