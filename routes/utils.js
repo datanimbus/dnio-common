@@ -29,7 +29,7 @@ router.put('/clean/:srvcId', async (req, res) => {
 router.get('/swagger', async (req, res) => {
     const txnId = req.header(global.txnIdHeader);
     try {
-        const basePath = '/api/common';
+        const basePath = '/api/a/common';
         const swagger = {
             swagger: '2.0',
             info: {
