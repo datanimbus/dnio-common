@@ -26,7 +26,7 @@ router.get('/ready', async (req, res) => {
             logger.error('[Not Ready] NATS Not Connected');
             return res.status(400).json({ message: 'NATS Not Connected' });
         }
-        res.status(400).json({ message: 'Cleaning All Generated Projects' });
+        res.status(200).json({ message: 'Application is ready' });
     } catch (err) {
         logger.error(err);
         res.status(500).json({ message: err.message });
