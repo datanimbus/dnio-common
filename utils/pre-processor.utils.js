@@ -80,6 +80,7 @@ async function canDoTransaction(req, res, next) {
                     }
                     managePermission = (cacheMap[data.dataService.name].managePermission || false);
                     workflowEnabled = (cacheMap[data.dataService.name].workflowEnabled || false);
+                    logger.debug(`Manage Permission :: ${managePermission} :: Workflow Enabled :: ${workflowEnabled}`);
                     return {
                         dataService: data.dataService,
                         managePermission,
