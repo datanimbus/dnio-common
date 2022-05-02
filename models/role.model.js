@@ -178,7 +178,7 @@ async function isPreventedByWorkflow(req, filter) {
         }
         const service = await global.authorDB.collection('services').findOne(filter);
 
-        if (!service.workflowConfig.enabled) {
+        if (!(service.workflowConfig && service.workflowConfig.enabled)) {
             return false;
         }
         if (req.user && req.user.allPermissions) {
