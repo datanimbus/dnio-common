@@ -177,6 +177,7 @@ async function isPreventedByWorkflow(req, filter) {
             throw new Error('UserID not found in request');
         }
         const service = await global.authorDB.collection('services').findOne(filter);
+        logger.trace('Service Details :: ', JSON.stringify(service));
 
         if (!(service && service.workflowConfig && service.workflowConfig.enabled)) {
             return false;
