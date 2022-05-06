@@ -23,6 +23,7 @@ function genrateCode(data) {
 	code.push(' */');
 	code.push('async function callAllPreHooks(req, newData, oldData, options) {');
 	if (preHooks && preHooks.length > 0) {
+		code.push(`\tlogger.trace(\`Mongo Connection details :: \${config.mongoLogUrl} :: \${JSON.stringify(config.mongoLogsOptions)} \`)`);
 		code.push(`\tconst client = await MongoClient.connect(config.mongoLogUrl, config.mongoLogsOptions);`);
 		code.push(`\tconst db = client.db(config.mongoLogsOptions.dbName);`);
 		code.push(`\tconst headers = {};`);
