@@ -253,6 +253,7 @@ function invokeHook(data) {
  * @param {string} data.txnId The TxnId of the Request
  */
 function invokeFunction(data, req) {
+    logger.info(`Invoking Function :: ${JSON.stringify(data.hook)}`)
     let timeout = (process.env.HOOK_CONNECTION_TIMEOUT && parseInt(process.env.HOOK_CONNECTION_TIMEOUT)) || 30;
     data.payload.properties = data.payload.properties || commonUtils.generateProperties(data.txnId);
     let headers = data.headers || commonUtils.generateHeaders(data.txnId);

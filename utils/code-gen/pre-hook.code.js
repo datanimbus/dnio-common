@@ -23,6 +23,7 @@ function genrateCode(data) {
 	code.push(' */');
 	code.push('async function callAllPreHooks(req, newData, oldData, options) {');
 	if (preHooks && preHooks.length > 0) {
+		code.push(`\tlogger.trace(\`Mongo Connection details :: \${config.mongoLogUrl} :: \${JSON.stringify(config.mongoLogsOptions)} \`)`);
 		code.push(`\tconst client = await MongoClient.connect(config.mongoLogUrl, config.mongoLogsOptions);`);
 		code.push(`\tconst db = client.db(config.mongoLogsOptions.dbName);`);
 		code.push(`\tconst headers = {};`);
@@ -84,6 +85,7 @@ function genrateCode(data) {
 			} else {
 				code.push(`\t\tresp = await commonUtils.invokeHook({ txnId, hook: ${JSON.stringify(hook)}, payload, headers });`);
 			}
+			code.push(`\t\tlogger.debug(\`[\${txnId}] PreHook :: ${hook.name} :: Response :: \${resp.statusCode} :: \${resp.body}\`);`);
 			code.push(`\t\tnewData = _.mergeWith(oldData, resp.body.data, commonUtils.mergeCustomizer);`);
 			code.push(`\t\tnewData._metadata = oldData._metadata;`);
 			code.push(`\t\tpreHookLog.data.new = JSON.parse(JSON.stringify(newData));`);
