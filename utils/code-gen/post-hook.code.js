@@ -23,7 +23,10 @@ function genrateCode(data) {
     code.push(' */');
     code.push('async function callAllPostHooks(req, newData, oldData, item) {');
     if (postHooks && postHooks.length > 0) {
-        code.push(`\tconst client = await MongoClient.connect(config.mongoLogUrl, config.mongoLogsOptions);`);
+        code.push(`\tlogger.trace(\`Mongo Connection details :: \${config.mongoLogUrl} :: \${JSON.stringify(config.mongoLogsOptions)} \`)`);
+		code.push(`\tlet obj = JSON.parse(JSON.stringify(config.mongoLogsOptions));`);
+		code.push(`\tdelete obj.dbName;`);
+        code.push(`\tconst client = await MongoClient.connect(config.mongoLogUrl, obj);`);
         code.push(`\tconst db = client.db(config.mongoLogsOptions.dbName);`);
         code.push(`\tconst headers = {};`);
         code.push(`\theaders['Data-Stack-DS-Name'] = '${data.name}';`);

@@ -24,7 +24,7 @@ function genrateCode(data) {
 	code.push('async function callAllPreHooks(req, newData, oldData, options) {');
 	if (preHooks && preHooks.length > 0) {
 		code.push(`\tlogger.trace(\`Mongo Connection details :: \${config.mongoLogUrl} :: \${JSON.stringify(config.mongoLogsOptions)} \`)`);
-		code.push(`\tlet obj = config.mongoLogsOptions;`);
+		code.push(`\tlet obj = JSON.parse(JSON.stringify(config.mongoLogsOptions));`);
 		code.push(`\tdelete obj.dbName;`);
 		code.push(`\tconst client = await MongoClient.connect(config.mongoLogUrl, obj);`);
 		code.push(`\tconst db = client.db(config.mongoLogsOptions.dbName);`);
