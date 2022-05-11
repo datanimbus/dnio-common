@@ -1,4 +1,4 @@
-FROM node:16.14.0-alpine3.15
+FROM node:16.15-alpine3.15
 
 WORKDIR /app
 
@@ -7,8 +7,10 @@ RUN apk upgrade
 
 COPY package.json package.json
 
+RUN npm install -g npm
 RUN npm i --production
 RUN npm audit fix
+RUN rm -rf /usr/local/lib/node_modules/npm/node_modules/node-gyp/test
 
 COPY . .
 
