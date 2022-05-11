@@ -185,10 +185,10 @@ async function isPreventedByWorkflow(req, filter) {
         if (req.user && req.user.allPermissions) {
             const permissions = ((req.user.allPermissions.find(e => e.app == filter.app) || {}).permissions) || [];
             if (permissions.indexOf(`ADMIN_${service._id}`) > -1) {
-                return true;
+                return false;
             }
         }
-        return false;
+        return true;
 
         // let records = await global.authorDB.collection('userMgmt.roles').aggregate([
         //     { $match: { _id: service._id } },
