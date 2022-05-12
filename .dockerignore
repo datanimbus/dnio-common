@@ -9,3 +9,4 @@ scripts
 common.yaml
 Jenkinsfile
 README.md
+package-lock.json
