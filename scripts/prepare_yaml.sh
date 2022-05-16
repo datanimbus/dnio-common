@@ -1,22 +1,25 @@
 #!/bin/bash
 
+set -e
+
 echo "****************************************************"
 echo "data.stack:common :: Copying yaml file "
 echo "****************************************************"
-if [ ! -d $WORKSPACE/../yamlFiles ]; then
-    mkdir $WORKSPACE/../yamlFiles
+if [ ! -d yamlFiles ]; then
+    mkdir yamlFiles
 fi
 
-REL=$1
-if [ $2 ]; then
-    REL=$REL-$2
-fi
+TAG=`cat CURRENT_COMMON`
 
-rm -rf $WORKSPACE/../yamlFiles/common.*
-cp $WORKSPACE/common.yaml $WORKSPACE/../yamlFiles/common.$REL.yaml
-cd $WORKSPACE/../yamlFiles/
+rm -rf yamlFiles/common.*
+cp common.yaml yamlFiles/common.$TAG.yaml
+cd yamlFiles/
 echo "****************************************************"
 echo "data.stack:common :: Preparing yaml file "
 echo "****************************************************"
-sed -i.bak s/__release_tag__/"'$1'"/ common.$REL.yaml
-sed -i.bak s/__release__/$REL/ common.$REL.yaml
+
+sed -i.bak s/__release__/$TAG/ common.$TAG.yaml
+
+echo "****************************************************"
+echo "data.stack:common :: yaml file saved"
+echo "****************************************************"
