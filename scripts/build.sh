@@ -9,7 +9,11 @@ echo "data.stack:common :: Building COMMON using TAG :: $TAG"
 echo "****************************************************"
 
 
-docker build -t data.stack.common:$TAG .
+if [ $cleanBuild ]; then
+    docker build --no-cache -t data.stack.common:$TAG .
+else 
+    docker build -t data.stack.common:$TAG .
+fi
 
 
 echo "****************************************************"
