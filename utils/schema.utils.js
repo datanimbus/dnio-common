@@ -89,7 +89,7 @@ function getProperties(definition) {
             properties[dataKey].properties = fileSchema.properties;
             properties[dataKey].required = fileSchema.required;
         } else {
-            if (def.properties.password) {
+            if (def.properties.password && !def.properties.longText && !def.properties.richText && !def.properties.fileType) {
                 const secureTextSchema = getSecureTextSchema();
                 properties[dataKey].properties = secureTextSchema.properties;
                 properties[dataKey].required = secureTextSchema.required;
