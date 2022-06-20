@@ -42,7 +42,7 @@ app.use((req, res, next) => {
 });
 
 // app.use(preProcessor.patchUserData);
-app.use(AuthCacheMW({ secret: config.TOKEN_SECRET, decodeOnly: true }));
+app.use(AuthCacheMW({ secret: config.RBAC_JWT_KEY, decodeOnly: true }));
 
 app.use('/common', require('./routes'));
 
