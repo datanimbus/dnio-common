@@ -11,6 +11,7 @@ RUN npm install -g npm
 RUN npm i --production
 RUN npm audit fix --production
 RUN rm -rf /usr/local/lib/node_modules/npm/node_modules/node-gyp/test
+RUN mkdir -p generatedCode
 
 COPY . .
 

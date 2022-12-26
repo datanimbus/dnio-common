@@ -13,8 +13,8 @@ const cascadeCode = require('./cascade.code');
 
 const logger = log4js.getLogger(global.loggerName);
 
-const generatedCodePath = path.join(process.cwd(), 'generatedCode');
-mkdirp.sync(generatedCodePath);
+// const generatedCodePath = path.join(process.cwd(), 'generatedCode');
+// mkdirp.sync(generatedCodePath);
 
 
 async function generateCode(srvc, schemaValidator) {
