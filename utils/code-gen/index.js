@@ -13,7 +13,7 @@ const cascadeCode = require('./cascade.code');
 
 const logger = log4js.getLogger(global.loggerName);
 
-// const generatedCodePath = path.join(process.cwd(), 'generatedCode');
+const generatedCodePath = path.join(process.cwd(), 'generatedCode');
 // mkdirp.sync(generatedCodePath);
 
 
