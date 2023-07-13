@@ -29,22 +29,21 @@ router.put('/clean/:srvcId', async (req, res) => {
 router.get('/swagger', async (req, res) => {
     const txnId = req.header(global.txnIdHeader);
     try {
-        const basePath = '/api/a/common';
         const swagger = {
-            swagger: '2.0',
+            openapi: '3.0.0',
             info: {
                 version: require('../package.json').version,
                 title: 'Common APIs'
             },
-            host: 'localhost:3000',
-            basePath: basePath,
-            schemes: ['http'],
-            consumes: ['application/json', 'multipart/form-data'],
-            produces: ['application/json', 'text/plain'],
+            servers: [{ 'url': 'http://localhost:3000/api/a/common' }],
             paths: {},
-            definitions: {}
+            components: {}
         };
-        swagger.definitions['txnPayload'] = {
+
+        let schemas = {}
+        let securitySchemes = {};
+
+        schemas['txnPayload'] = {
             type: 'array',
             items: {
                 type: 'object',
@@ -79,27 +78,31 @@ router.get('/swagger', async (req, res) => {
                 }
             }
         };
+
+        securitySchemes['bearerAuth'] = {
+            'type': 'http',
+            'scheme': 'bearer',
+            'bearerFormat': 'JWT'
+        };
+
+        swagger.components.securitySchemes = securitySchemes
+        swagger.components.schemas = schemas;
+
         swagger.paths['/txn'] = {
             'x-swagger-router-controller': 'handleTransaction',
             post: {
-                description: `Do CUD Operation on Data Services using Transactions`,
+                description: `Do CRUD Operation on Data Services using Transactions`,
                 operationId: `handleTransaction`,
-                parameters: [
-                    {
-                        name: 'data',
-                        in: 'body',
-                        description: `Payload of Transaction`,
-                        schema: {
-                            $ref: `#/definitions/txnPayload`
+                requestBody: {
+                    description: `Payload of Transaction`,
+                    content: {
+                        'application/json': {
+                            schema: {
+                                $ref: `#/components/schemas/txnPayload`
+                            }
                         }
-                    },
-                    {
-                        name: 'authorization',
-                        in: 'header',
-                        type: 'string',
-                        description: 'The JWT token for req validation'
                     }
-                ],
+                },
                 responses: {
                     '200': {
                         description: 'The new documents if PUT/POST and message if DELETE'
@@ -110,14 +113,18 @@ router.get('/swagger', async (req, res) => {
                     '500': {
                         description: 'Internal server error'
                     }
-                }
+                },
+                security: [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         };
-        swagger.host = req.query.host;
-        logger.debug(`[${txnId}] Swagger host :: ${swagger.host}`);
-        swagger.basePath = req.query.basePath ? req.query.basePath : swagger.basePath;
-        logger.debug(`[${txnId}] Swagger basePath :: ${swagger.basePath}`);
-        addAuthHeader(swagger.paths, req.query.token);
+        let basePath = req.query.basePath ? req.query.basePath : '/api/a/common';
+        logger.debug(`[${txnId}] Swagger servers :: [{ 'url': http://${req.query.host}${basePath} }]`);
+        swagger.servers = [{ 'url': `http://${req.query.host}${basePath}` }];
+        //addAuthHeader(swagger.paths, req.query.token);
         res.status(200).json(swagger);
     } catch (err) {
         logger.error(err);
@@ -126,16 +133,16 @@ router.get('/swagger', async (req, res) => {
 });
 
 
-function addAuthHeader(paths, jwt) {
-    Object.keys(paths).forEach(path => {
-        Object.keys(paths[path]).forEach(method => {
-            if (typeof paths[path][method] == 'object' && paths[path][method]['parameters']) {
-                let authObj = paths[path][method]['parameters'].find(obj => obj.name == 'authorization');
-                if (authObj) authObj.default = jwt;
-            }
-        });
-    });
-}
+// function addAuthHeader(paths, jwt) {
+//     Object.keys(paths).forEach(path => {
+//         Object.keys(paths[path]).forEach(method => {
+//             if (typeof paths[path][method] == 'object' && paths[path][method]['parameters']) {
+//                 let authObj = paths[path][method]['parameters'].find(obj => obj.name == 'authorization');
+//                 if (authObj) authObj.default = jwt;
+//             }
+//         });
+//     });
+// }
 
 
 module.exports = router;
