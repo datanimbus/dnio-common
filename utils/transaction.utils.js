@@ -49,11 +49,12 @@ async function executeTransaction(req, payload) {
                     delete item.data._id;
                     // const oldData = await dataDB.collection(item.dataService.collectionName).findOne({ _id: id }, { session });
                     // item.oldData = JSON.parse(JSON.stringify(oldData));
-                    item.data = _.merge(item.oldData, item.data);
                     require(path.join(item.dataService.folderPath, 'trans-validation.js')).validateCreateOnly(req, item.data, item.oldData);
                     if (_.has(item.data, '$inc') || _.has(item.data, '$mul')) {
+                        cleanPayload(item.data);
                         status = await dataDB.collection(item.dataService.collectionName).findOneAndUpdate({ _id: id, '_metadata.version.document': item.oldData._metadata.version.document }, item.data, { session });
                     } else {
+                        item.data = _.merge(item.oldData, item.data);
                         status = await dataDB.collection(item.dataService.collectionName).findOneAndUpdate({ _id: id, '_metadata.version.document': item.oldData._metadata.version.document }, { $set: item.data }, { session, upsert: item.upsert });
                     }
                     status = await dataDB.collection(item.dataService.collectionName).findOneAndUpdate({ _id: id }, { $inc: { '_metadata.version.document': 1 } }, { session, returnDocument: 'after' });
@@ -67,7 +68,7 @@ async function executeTransaction(req, payload) {
                     result = status.value;
                     item.newData = result;
                 } else {
-                    result = { message: 'Docuemnt Deleted Successfully' };
+                    result = { message: 'Document Deleted Successfully' };
                     item.newData = null;
                 }
                 oneResult.statusCode = 200;
@@ -133,3 +134,14 @@ async function executeTransaction(req, payload) {
 }
 
 module.exports.executeTransaction = executeTransaction;
+
+
+function cleanPayload(data) {
+    if (data) {
+        Object.keys(data).forEach(key => {
+            if (!key.startsWith('$')) {
+                delete data[key];
+            }
+        });
+    }
+}

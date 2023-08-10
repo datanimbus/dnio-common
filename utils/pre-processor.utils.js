@@ -187,10 +187,12 @@ async function schemaValidation(req, res, next) {
         function cleanData(item) {
             delete item.oldData;
             delete item.temp;
+            const srvcId = item.dataService._id;
             const srvcName = item.dataService.name;
             const srvcApp = item.dataService.app;
             delete item.dataService;
             item.dataService = {
+                _id: srvcId,
                 name: srvcName,
                 app: srvcApp
             };
@@ -199,7 +201,9 @@ async function schemaValidation(req, res, next) {
         let promises = req.body.body.map(async (item) => {
             const temp = await dataServiceModel.patchOldRecord(item);
             if (temp.oldData) {
+                let tempOldData = JSON.parse(JSON.stringify(temp.oldData));
                 item.data = _.merge(temp.oldData, item.data);
+                temp.oldData = tempOldData;
             }
             if (item.operation === 'PUT' && !item.upsert && !temp.oldData) {
                 cleanData(item);
