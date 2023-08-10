@@ -56,7 +56,7 @@ async function executeTransaction(req, payload) {
                     } else {
                         status = await dataDB.collection(item.dataService.collectionName).findOneAndUpdate({ _id: id }, { $set: item.data }, { session, upsert: item.upsert });
                     }
-                    status = await dataDB.collection(item.dataService.collectionName).findOneAndUpdate({ _id: id }, { $inc: { '_metadata.version.document': 1 } }, { session, returnDocument: 'after' });
+                    status = await dataDB.collection(item.dataService.collectionName).findOneAndUpdate({ _id: id, '_metadata.version.document': item.oldData._metadata.version.document }, { $inc: { '_metadata.version.document': 1 } }, { session, returnDocument: 'after' });
                 } else if (item.operation === 'DELETE') {
                     status = await dataDB.collection(item.dataService.collectionName).findOneAndDelete({ _id: item.data._id }, { session });
                 }
