@@ -52,11 +52,11 @@ async function executeTransaction(req, payload) {
                     item.data = _.merge(item.oldData, item.data);
                     require(path.join(item.dataService.folderPath, 'trans-validation.js')).validateCreateOnly(req, item.data, item.oldData);
                     if (_.has(item.data, '$inc') || _.has(item.data, '$mul')) {
-                        status = await dataDB.collection(item.dataService.collectionName).findOneAndUpdate({ _id: id }, item.data, { session });
+                        status = await dataDB.collection(item.dataService.collectionName).findOneAndUpdate({ _id: id, '_metadata.version.document': item.oldData._metadata.version.document }, item.data, { session });
                     } else {
-                        status = await dataDB.collection(item.dataService.collectionName).findOneAndUpdate({ _id: id }, { $set: item.data }, { session, upsert: item.upsert });
+                        status = await dataDB.collection(item.dataService.collectionName).findOneAndUpdate({ _id: id, '_metadata.version.document': item.oldData._metadata.version.document }, { $set: item.data }, { session, upsert: item.upsert });
                     }
-                    status = await dataDB.collection(item.dataService.collectionName).findOneAndUpdate({ _id: id, '_metadata.version.document': item.oldData._metadata.version.document }, { $inc: { '_metadata.version.document': 1 } }, { session, returnDocument: 'after' });
+                    status = await dataDB.collection(item.dataService.collectionName).findOneAndUpdate({ _id: id }, { $inc: { '_metadata.version.document': 1 } }, { session, returnDocument: 'after' });
                 } else if (item.operation === 'DELETE') {
                     status = await dataDB.collection(item.dataService.collectionName).findOneAndDelete({ _id: item.data._id }, { session });
                 }
