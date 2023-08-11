@@ -73,7 +73,7 @@ async function genrateCode(config) {
 
 
 		code.push(`idGenerator['SRVC_${srvc._id}'] = async function(req, newData, oldData) {`);
-		code.push(`\tconst client = await MongoClient.connect(config.mongoDataUrl, config.mongoDataOptions);`);
+		code.push(`\tconst client = await MongoClient.connect(config.mongoDataUrl);`);
 		code.push(`\tconst counterCol = client.db(config.namespace + '-${srvc.app}').collection('counters');`);
 		if (idDetails.counter) {
 			code.push(`\ttry {`);

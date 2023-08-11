@@ -21,7 +21,7 @@ function genrateCode(data) {
 
 
 	code.push(`async function generateId(req, newData, oldData) {`);
-	code.push(`	const client = await MongoClient.connect(config.mongoDataUrl, config.mongoDataOptions);`);
+	code.push(`	const client = await MongoClient.connect(config.mongoDataUrl);`);
 	code.push(`	const counterCol = client.db(config.namespace + '-${data.app}').collection('counters');`);
 	if (idDetails.counter) {
 		code.push(` try {`);
@@ -67,7 +67,7 @@ function genrateCode(data) {
 	code.push(' */');
 	code.push('async function validateUnique(req, newData, oldData) {');
 	code.push('\tconst errors = {};');
-	code.push('\tconst client = await MongoClient.connect(config.mongoDataUrl, config.mongoDataOptions);');
+	code.push('\tconst client = await MongoClient.connect(config.mongoDataUrl);');
 	code.push(`\tconst col = client.db(config.namespace + '-${data.app}').collection('${data.collectionName}');`);
 	code.push('\tlet val;');
 	code.push('\ttry {');
