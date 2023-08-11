@@ -9,12 +9,12 @@ async function patchOldRecord(payload) {
         return payload;
     }
     const dbname = config.namespace + '-' + payload.dataService.app;
-    const client = await MongoClient.connect(config.mongoDataUrl, config.mongoDataOptions);
+    const client = await MongoClient.connect(config.mongoDataUrl);
     logger.info('Connected to ', dbname);
     const dataDB = client.db(dbname);
     const collection = dataDB.collection(payload.dataService.collectionName);
     try {
-        const doc = await collection.findOne({ _id: payload.data._id });
+        const doc = await collection.findOne(payload.filter);
         if (doc) {
             payload.oldData = doc;
         }

@@ -24,12 +24,14 @@ async function basicValidation(req, res, next) {
     try {
         let errors = [];
         req.body.forEach((item, index) => {
-            if ((item.operation === 'PUT' || item.operation === 'DELETE') && (!item.data || !item.data._id)) {
-                errors.push({ item, index, error: 'ID was not provided for ' + item.operation + ' operation' });
-            }
-            if (item.operation === 'DELETE' && item.data && item.data._id) {
-                const id = item.data._id
-                item.data = { _id: id };
+            if ((item.operation === 'PUT' || item.operation === 'DELETE')) {
+                let isInvalid = true;
+                if (item.filter && !_.isEmpty(item.filter)) {
+                    isInvalid = false;
+                }
+                if (isInvalid) {
+                    errors.push({ item, index, error: 'Filter was not provided for ' + item.operation + ' operation' });
+                }
             }
             if (!item.data) {
                 errors.push({ item, index, error: 'Data was not provided for ' + item.operation + ' operation' });
