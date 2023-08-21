@@ -57,9 +57,14 @@ function getProperties(definition) {
                 properties[dataKey].properties = dateSchema.properties;
                 properties[dataKey].required = dateSchema.required;
             } else {
-                const converted = getProperties(def.definition);
-                properties[dataKey].properties = converted.properties;
-                properties[dataKey].required = converted.required;
+                if (!def.properties.schemaFree) {
+                    const converted = getProperties(def.definition);
+                    properties[dataKey].properties = converted.properties;
+                    properties[dataKey].required = converted.required;
+                } else {
+                    properties[dataKey].properties = def.properties;
+                    properties[dataKey].required = def.required;
+                }
             }
         } else if (def.type === "Array") {
             properties[dataKey].items = {};
