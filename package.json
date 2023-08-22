@@ -1,9 +1,10 @@
 {
   "name": "ds-transaction",
-  "version": "2.6.3",
+  "version": "2.7.5",
   "description": "This README would normally document whatever steps are necessary to get your application up and running.",
   "main": "app.js",
   "scripts": {
+    "start": "node app.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
