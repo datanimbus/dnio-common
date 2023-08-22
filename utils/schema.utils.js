@@ -62,8 +62,7 @@ function getProperties(definition) {
                     properties[dataKey].properties = converted.properties;
                     properties[dataKey].required = converted.required;
                 } else {
-                    properties[dataKey].properties = def.properties;
-                    properties[dataKey].required = def.required;
+                    properties[dataKey].required = [];
                 }
             }
         } else if (def.type === "Array") {

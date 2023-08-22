@@ -204,7 +204,7 @@ async function genrateCode(config) {
 					code.push(`\t\t\terrors['${path}'] = e.message ? e.message : e;`);
 					code.push('\t\t}');
 					code.push('\t}');
-				} else if (def.type == 'Object') {
+				} else if (def.type == 'Object' && !def.properties.schemaFree) {
 					parseSchemaForRelation(def.definition, path);
 				} else if (def.type == 'Array') {
 					if (def.definition[0].properties.relatedTo || def.definition[0].type == 'User') {
@@ -249,7 +249,7 @@ async function genrateCode(config) {
 			let key = def.key;
 			const path = parentKey ? parentKey + '.' + key : key;
 			if (key != '_id' && def.properties) {
-				if (def.type == 'Object') {
+				if (def.type == 'Object' && !def.properties.schemaFree) {
 					parseSchemaForCreateOnly(def.definition, path);
 				} else if (def.type == 'Array' && def.properties && def.properties.createOnly) {
 					code.push('\t\tif (!forceRemove) {');
@@ -285,7 +285,7 @@ async function genrateCode(config) {
 			let key = def.key;
 			const path = parentKey ? parentKey + '.' + key : key;
 			if (key != '_id' && def.properties) {
-				if (def.type == 'Object') {
+				if (def.type == 'Object' && !def.properties.schemaFree) {
 					parseSchemaForUnique(def.definition, path);
 				} else if (def.type == 'Array') {
 					// code.push(`\t if((_.get(newData,'${path}')||[]).length !== (_.get(newData,'${path}')||[]).length) {`);

@@ -168,7 +168,7 @@ function genrateCode(data) {
 			let key = def.key;
 			const path = parentKey ? parentKey + '.' + key : key;
 			if (key != '_id' && def.properties) {
-				if (def.type == 'Object') {
+				if (def.type == 'Object' && !def.properties.schemaFree) {
 					parseSchemaForUnique(def.definition, path);
 				} else if (def.type == 'Array') {
 					// code.push(`\t if((_.get(newData,'${path}')||[]).length !== (_.get(newData,'${path}')||[]).length) {`);
@@ -213,7 +213,7 @@ function genrateCode(data) {
 					code.push(`\t\t\terrors['${path}'] = e.message ? e.message : e;`);
 					code.push('\t\t}');
 					code.push('\t}');
-				} else if (def.type == 'Object') {
+				} else if (def.type == 'Object' && !def.properties.schemaFree) {
 					parseSchemaForEncryption(def.definition, path);
 				} else if (def.type == 'Array') {
 					if (def.definition[0].properties.password) {
@@ -277,7 +277,7 @@ function genrateCode(data) {
 					code.push(`\t\terrors['${path}'] = e.message ? e.message : e;`);
 					code.push('\t}');
 					// code.push(`\t_.set(newData, '${path}', ${_.camelCase(path)});`);
-				} else if (def.type == 'Object') {
+				} else if (def.type == 'Object' && !def.properties.schemaFree) {
 					parseSchemaForBoolean(def.definition, path);
 				} else if (def.type == 'Array') {
 					if (def.definition[0].type == 'Boolean') {
@@ -334,7 +334,7 @@ function genrateCode(data) {
 					code.push(`\t\t\t// errors['${path}'] = e.message ? e.message : e;`);
 					code.push('\t\t}');
 					code.push('\t}');
-				} else if (def.type == 'Object') {
+				} else if (def.type == 'Object' && !def.properties.schemaFree) {
 					parseSchemaForGeojson(def.definition, path);
 				} else if (def.type == 'Array') {
 					if (def.definition[0].type == 'Geojson' || def.definition[0].properties.geoType) {
@@ -402,7 +402,7 @@ function genrateCode(data) {
 					code.push(`\t\t\terrors['${path}'] = e.message ? e.message : e;`);
 					code.push('\t\t}');
 					code.push('\t}');
-				} else if (def.type == 'Object') {
+				} else if (def.type == 'Object' && !def.properties.schemaFree) {
 					parseSchemaForDateFields(def.definition, path);
 				} else if (def.type == 'Array') {
 					if (def.definition[0]['properties'] && def.definition[0]['properties']['dateType']) {

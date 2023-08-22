@@ -62,7 +62,7 @@ function genrateCode(config) {
                     code.push(`\t\t_.set(newData, '${path}', { _id: id });`);
                     code.push(`\t\tpayloads.push(payload);`);
                     code.push('\t}');
-                } else if (def.type == 'Object') {
+                } else if (def.type == 'Object' && !def.properties.schemaFree) {
                     parseSchemaForCascade(def.definition, path);
                 } else if (def.type == 'Array') {
                     if (def.definition[0].properties.relatedTo) {
