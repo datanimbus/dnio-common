@@ -5,7 +5,7 @@ function genrateCode(data) {
     const code = [];
     code.push('const { MongoClient } = require(\'mongodb\');');
     code.push('const log4js = require(\'log4js\');');
-    code.push('const uuid = require(\'uuid/v1\');');
+    code.push('const { v4: uuid } = require(\'uuid\');');
     code.push('const _ = require(\'lodash\');');
     code.push('');
     code.push('const config = require(\'../../config\');');
