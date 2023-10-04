@@ -43,7 +43,7 @@ async function executeTransaction(req, payload) {
                 if (item.operation === 'POST') {
                     item.data._metadata.createdAt = new Date();
                     item.data._metadata.version.document = 1;
-                    status = await dataDB.collection(item.dataService.collectionName).insert(item.data, { session });
+                    status = await dataDB.collection(item.dataService.collectionName).insertOne(item.data, { session });
                     id = status.insertedIds['0'];
                 } else if (item.operation === 'PUT') {
                     delete item.data._id;
@@ -52,10 +52,10 @@ async function executeTransaction(req, payload) {
                     require(path.join(item.dataService.folderPath, 'trans-validation.js')).validateCreateOnly(req, item.data, item.oldData);
                     if (_.has(item.data, '$inc') || _.has(item.data, '$mul')) {
                         cleanPayload(item.data);
-                        status = await dataDB.collection(item.dataService.collectionName).findOneAndUpdate(item.filter, item.data, { session });
+                        status = await dataDB.collection(item.dataService.collectionName).findOneAndUpdate(item.filter, item.data, { session, returnDocument: 'after' });
                     } else {
                         item.data = _.merge(item.oldData, item.data);
-                        status = await dataDB.collection(item.dataService.collectionName).findOneAndUpdate(item.filter, { $set: item.data }, { session, upsert: item.upsert });
+                        status = await dataDB.collection(item.dataService.collectionName).findOneAndUpdate(item.filter, { $set: item.data }, { session, upsert: item.upsert, returnDocument: 'after' });
                     }
                     status = await dataDB.collection(item.dataService.collectionName).findOneAndUpdate(item.filter, { $inc: { '_metadata.version.document': 1 } }, { session, returnDocument: 'after' });
                 } else if (item.operation === 'DELETE') {
