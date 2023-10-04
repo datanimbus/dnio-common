@@ -44,7 +44,7 @@ async function executeTransaction(req, payload) {
                     item.data._metadata.createdAt = new Date();
                     item.data._metadata.version.document = 1;
                     status = await dataDB.collection(item.dataService.collectionName).insertOne(item.data, { session });
-                    id = status.insertedIds['0'];
+                    id = status.insertedId;
                 } else if (item.operation === 'PUT') {
                     delete item.data._id;
                     // const oldData = await dataDB.collection(item.dataService.collectionName).findOne({ _id: id }, { session });
