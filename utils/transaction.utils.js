@@ -57,7 +57,11 @@ async function executeTransaction(req, payload) {
                         item.data = _.merge(item.oldData, item.data);
                         status = await dataDB.collection(item.dataService.collectionName).findOneAndUpdate(item.filter, { $set: item.data }, { session, upsert: item.upsert, returnDocument: 'after' });
                     }
+                    logger.debug('Update Result 1:', status);
+                    logger.trace('Update Result 1:', JSON.stringify(status));
                     status = await dataDB.collection(item.dataService.collectionName).findOneAndUpdate(item.filter, { $inc: { '_metadata.version.document': 1 } }, { session, returnDocument: 'after' });
+                    logger.debug('Update Result 2:', status);
+                    logger.trace('Update Result 2:', JSON.stringify(status));
                 } else if (item.operation === 'DELETE') {
                     status = await dataDB.collection(item.dataService.collectionName).findOneAndDelete(item.filter, { session });
                 }
