@@ -115,16 +115,16 @@ function getProperties(definition) {
 function getValidations(def) {
     const properties = {};
     if (def.properties.min != null && def.properties.min != undefined) {
-        properties.minimum = def.properties.min;
+        properties.minimum = parseInt(def.properties.min + '');
     }
     if (def.properties.max != null && def.properties.max != undefined) {
-        properties.maximum = def.properties.max;
+        properties.maximum = parseInt(def.properties.max + '');
     }
     if (def.properties.minlength != null && def.properties.minlength != undefined) {
-        properties.minLength = def.properties.minlength;
+        properties.minLength = parseInt(def.properties.minlength + '');
     }
     if (def.properties.maxlength != null && def.properties.maxlength != undefined) {
-        properties.maxLength = def.properties.maxlength;
+        properties.maxLength = parseInt(def.properties.maxlength + '');
     }
     if (def.properties.pattern != null && def.properties.pattern != undefined) {
         properties.pattern = def.properties.pattern;
