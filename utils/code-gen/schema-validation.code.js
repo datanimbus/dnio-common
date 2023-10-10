@@ -24,8 +24,8 @@ function genrateCode(config) {
     code.push(' * @returns {object[]} Returns related data payloads');
     code.push(' */');
     code.push('async function validateSchema(data) {');
-    code.push(`\tconst schema_${data._id} = fs.readFileSync(\'./schema.json\');`);
-    code.push(`\tconst validator = schemaValidator.compile(schema_${data._id});`)
+    code.push(`\tconst schema_${config._id} = fs.readFileSync(\'./schema.json\');`);
+    code.push(`\tconst validator = schemaValidator.compile(schema_${config._id});`)
     code.push(`\tconst valid = validator(data)`);
     code.push(`\tif (!valid) {`);
     code.push(`\t\tlogger.debug('Validation Errors:');`);
