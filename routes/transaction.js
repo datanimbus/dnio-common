@@ -10,7 +10,7 @@ router.use(preProcessor.basicValidation);
 router.use(preProcessor.canDoTransaction);
 router.use(preProcessor.initCodeGen);
 router.use(preProcessor.preHookValidation);
-// router.use(preProcessor.schemaValidation);
+router.use(preProcessor.schemaValidation);
 router.use(preProcessor.specialFieldsValidation);
 
 router.post('/', async (req, res) => {

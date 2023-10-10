@@ -248,6 +248,8 @@ async function schemaValidation(req, res, next) {
             let flag = schemaValidator.validate(schemaValidator.getSchema(item.dataService._id).schema, item.data);
             if (!flag) {
                 cleanData(item);
+                logger.debug('Validation Error Messages:');
+                logger.debug(JSON.stringify(errors));
                 errors.push({ item, errors: schemaValidator.errors.map(e => e.message) });
             }
             return item;
