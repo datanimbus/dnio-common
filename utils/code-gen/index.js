@@ -10,6 +10,7 @@ const preHookCode = require('./pre-hook.code');
 const postHookCode = require('./post-hook.code');
 const transValidationCode = require('./trans-validation.code');
 const cascadeCode = require('./cascade.code');
+const schemaValidationCode = require('./schema-validation.code');
 
 const logger = log4js.getLogger(global.loggerName);
 
@@ -21,10 +22,10 @@ async function generateCode(srvc, schemaValidator) {
     const serviceFolder = path.join(generatedCodePath, srvc._id + '_' + srvc.version);
     srvc.folderPath = serviceFolder;
     if (fs.existsSync(serviceFolder)) {
-        schemaValidator.removeSchema(srvc._id);
-        if (!schemaValidator.getSchema(srvc._id)) {
-            schemaValidator.addSchema(require(path.join(srvc.folderPath, 'schema.json')), srvc._id);
-        }
+        // schemaValidator.removeSchema(srvc._id);
+        // if (!schemaValidator.getSchema(srvc._id)) {
+        //     schemaValidator.addSchema(require(path.join(srvc.folderPath, 'schema.json')), srvc._id);
+        // }
         logger.info('Code Exists :: Skipping Code Generation');
         return srvc;
     }
@@ -32,13 +33,14 @@ async function generateCode(srvc, schemaValidator) {
     logger.info('New Version :: Generating Code');
     mkdirp.sync(serviceFolder);
     const schemaJSON = schemaUtils.convertToJSONSchema(srvc);
-    schemaValidator.removeSchema(srvc._id);
-    schemaValidator.addSchema(schemaJSON, srvc._id);
+    // schemaValidator.removeSchema(srvc._id);
+    // schemaValidator.addSchema(schemaJSON, srvc._id);
     fs.writeFileSync(path.join(serviceFolder, 'schema.json'), JSON.stringify(schemaJSON, null, 2));
     fs.writeFileSync(path.join(serviceFolder, 'pre-hook.js'), preHookCode.genrateCode(srvc));
     fs.writeFileSync(path.join(serviceFolder, 'pre-validation.js'), preValidationCode.genrateCode(srvc));
     fs.writeFileSync(path.join(serviceFolder, 'post-hook.js'), postHookCode.genrateCode(srvc));
     fs.writeFileSync(path.join(serviceFolder, 'cascade-payload.js'), cascadeCode.genrateCode(srvc));
+    fs.writeFileSync(path.join(serviceFolder, 'schema-validation.js'), schemaValidationCode.genrateCode(srvc));
     fs.writeFileSync(path.join(serviceFolder, 'trans-validation.js'), await transValidationCode.genrateCode(srvc));
     return srvc;
 }
