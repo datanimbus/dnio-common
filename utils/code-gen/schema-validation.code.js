@@ -23,7 +23,7 @@ function genrateCode(config) {
     code.push(' * @param {*} data The data to be validated');
     code.push(' * @returns {object[]} Returns related data payloads');
     code.push(' */');
-    code.push('async function validateSchema(data) {');
+    code.push('function validateSchema(data) {');
     code.push(`\tconst schema_${config._id} = fs.readFileSync(\'./schema.json\');`);
     code.push(`\tconst validator = schemaValidator.compile(schema_${config._id});`)
     code.push(`\tconst valid = validator(data)`);
