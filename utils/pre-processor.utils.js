@@ -245,21 +245,29 @@ async function schemaValidation(req, res, next) {
                 }
             }
             // let flag = schemaValidator.validate(require(path.join(item.dataService.folderPath, 'schema.json')), item.data);
-            let flag = schemaValidator.validate(schemaValidator.getSchema(item.dataService._id).schema, item.data);
-            if (!flag) {
-                cleanData(item);
-                logger.debug('Validation Error Messages:');
-                logger.debug(JSON.stringify(errors));
-                errors.push({ item, errors: schemaValidator.errors.map(e => e.message) });
-            }
+            // let flag = schemaValidator.validate(schemaValidator.getSchema(item.dataService._id).schema, item.data);
+            // if (!flag) {
+            //     cleanData(item);
+            //     logger.debug('Validation Error Messages:');
+            //     logger.debug(JSON.stringify(errors));
+            //     errors.push({ item, errors: schemaValidator.errors.map(e => e.message) });
+            // }
 
-            // let validationErrors = require(path.join(item.dataService.folderPath, 'schema-validation.js'))(item.data);
+            // let validationErrors = require(path.join(item.dataService.folderPath, 'schema-validation.js')).validateSchema(item.data);
             // if (validationErrors) {
             //     cleanData(item);
             //     logger.debug('Validation Error Messages:');
             //     logger.debug(JSON.stringify(validationErrors));
             //     errors.push({ item, errors: validationErrors.map(e => e.message) });
             // }
+
+            let validationErrors = require(path.join(item.dataService.folderPath, 'model-validation.js')).validateModel(item.data);
+            if (validationErrors) {
+                cleanData(item);
+                logger.debug('Validation Error Messages:');
+                logger.debug(JSON.stringify(validationErrors));
+                errors.push({ item, errors: validationErrors.errors });
+            }
 
             return item;
         });

@@ -5,12 +5,14 @@ const log4js = require('log4js');;
 
 const config = require('../../config');
 const schemaUtils = require('../schema.utils');
+const definitionUtils = require('../definition.utils');
 const preValidationCode = require('./pre-validation.code');
 const preHookCode = require('./pre-hook.code');
 const postHookCode = require('./post-hook.code');
 const transValidationCode = require('./trans-validation.code');
 const cascadeCode = require('./cascade.code');
 const schemaValidationCode = require('./schema-validation.code');
+const modelValidationCode = require('./model.code');
 
 const logger = log4js.getLogger(global.loggerName);
 
@@ -33,14 +35,17 @@ async function generateCode(srvc, schemaValidator) {
     logger.info('New Version :: Generating Code');
     mkdirp.sync(serviceFolder);
     const schemaJSON = schemaUtils.convertToJSONSchema(srvc);
+    const schemaDefinition = definitionUtils.generateDefinition(srvc);
     schemaValidator.removeSchema(srvc._id);
     schemaValidator.addSchema(schemaJSON, srvc._id);
+    fs.writeFileSync(path.join(serviceFolder, 'definition.js'), schemaDefinition);
     fs.writeFileSync(path.join(serviceFolder, 'schema.json'), JSON.stringify(schemaJSON, null, 2));
     fs.writeFileSync(path.join(serviceFolder, 'pre-hook.js'), preHookCode.genrateCode(srvc));
     fs.writeFileSync(path.join(serviceFolder, 'pre-validation.js'), preValidationCode.genrateCode(srvc));
     fs.writeFileSync(path.join(serviceFolder, 'post-hook.js'), postHookCode.genrateCode(srvc));
     fs.writeFileSync(path.join(serviceFolder, 'cascade-payload.js'), cascadeCode.genrateCode(srvc));
     fs.writeFileSync(path.join(serviceFolder, 'schema-validation.js'), schemaValidationCode.genrateCode(srvc));
+    fs.writeFileSync(path.join(serviceFolder, 'model-validation.js'), modelValidationCode.genrateCode(srvc));
     fs.writeFileSync(path.join(serviceFolder, 'trans-validation.js'), await transValidationCode.genrateCode(srvc));
     return srvc;
 }
