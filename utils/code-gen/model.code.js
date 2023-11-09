@@ -14,10 +14,10 @@ function genrateCode(config) {
     code.push('const { definition } = require(\'./definition.js\');');
     code.push('');
     code.push('const logger = log4js.getLogger(global.loggerName);');
-    code.push(`if (!global.modalInit || !global.modalInit['${schema._id}']) {`);
-    code.push(`\tglobal.modalInit['${schema._id}'] = true;`);
+    code.push(`if (!global.modalInit || !global.modalInit['${config._id}']) {`);
+    code.push(`\tglobal.modalInit['${config._id}'] = true;`);
     code.push('\tconst schema = new mongoose.Schema(definition);');
-    code.push(`\tconst model = mongoose.model('${schema._id}', schema);`);
+    code.push(`\tconst model = mongoose.model('${config._id}', schema);`);
     code.push('}');
     code.push('/**');
     code.push(' * @param {*} data The data to be validated');
@@ -26,8 +26,8 @@ function genrateCode(config) {
     code.push('async function validateModel(data) {');
     code.push(`\tlet error = null;`);
     code.push(`\ttry {`);
-    code.push(`\t\tlogger.debug('${schema._id}', data);`);
-    code.push(`\t\tconst model = mongoose.model('${schema._id}');`);
+    code.push(`\t\tlogger.trace('${config._id}', data);`);
+    code.push(`\t\tconst model = mongoose.model('${config._id}');`);
     code.push(`\t\tconst document = new model(data);`);
     code.push(`\t\tawait document.validate();`);
     code.push(`\t} catch (err) {`);
