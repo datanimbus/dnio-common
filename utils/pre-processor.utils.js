@@ -212,7 +212,7 @@ async function schemaValidation(req, res, next) {
                 temp.oldData = tempOldData;
             }
             if (item.operation === 'PUT' && !item.upsert && !temp.oldData) {
-                logger.info('Clean Data Called');
+                logger.info('Clean Data Called for Upsert Flag');
                 cleanData(item);
                 errors.push({ item, errors: { message: 'Document does not exists.' } });
             }
@@ -235,7 +235,7 @@ async function schemaValidation(req, res, next) {
                 if (item.operation === 'PUT') {
                     if (!temp.oldData) {
                         if (newStateValue && !item.dataService.stateModel.initialStates.includes(newStateValue)) {
-                            logger.info('Clean Data Called');
+                            logger.info('Clean Data Called for initialStates');
                             cleanData(item);
                             errors.push({ item, errors: { message: 'Record is not in initial state.' } });
                         }
@@ -246,7 +246,7 @@ async function schemaValidation(req, res, next) {
                         let oldStateValue = _.get(temp.oldData, item.dataService.stateModel.attribute);
                         let oldState = item.dataService.stateModel.states[oldStateValue];
                         if (newStateValue != oldStateValue && (!oldState || !oldState.includes(newStateValue))) {
-                            logger.info('Clean Data Called');
+                            logger.info('Clean Data Called For State transition');
                             cleanData(item);
                             errors.push({ item, errors: { message: 'State transition is not allowed.' } });
                         }
@@ -272,7 +272,7 @@ async function schemaValidation(req, res, next) {
 
             let validationErrors = await require(path.join(item.dataService.folderPath, 'model-validation.js')).validateModel(item.data);
             if (validationErrors && validationErrors.errors) {
-                logger.info('Clean Data Called');
+                logger.info('Clean Data Called at validationErrors');
                 cleanData(item);
                 logger.debug('Validation Error Messages:');
                 logger.debug(JSON.stringify(validationErrors));
