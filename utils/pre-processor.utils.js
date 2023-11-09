@@ -149,7 +149,6 @@ async function initCodeGen(req, res, next) {
             const srvc = _.find(all, e.dataService);
             e.dataService = srvc;
             app = srvc.app;
-            logger.trace('Service Data :', srvc);
             temp.push(e);
             if (srvc.relatedSchemas.outgoing && srvc.relatedSchemas.outgoing.length > 0) {
                 const payloads = await require(path.join(srvc.folderPath, 'cascade-payload.js')).createCascadePayload(req, e.data);
@@ -212,6 +211,8 @@ async function schemaValidation(req, res, next) {
                 cleanData(item);
                 errors.push({ item, errors: { message: 'Document does not exists.' } });
             }
+
+            logger.trace('Schema Validation', item);
 
             // State Model Code
             if (item.dataService.stateModel && item.dataService.stateModel.enabled) {
