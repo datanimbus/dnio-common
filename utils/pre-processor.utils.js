@@ -119,7 +119,9 @@ async function initCodeGen(req, res, next) {
     const servicesFilter = _.uniqBy(req.body.map(e => e.dataService), 'name');
     let services;
     try {
+        logger.debug('Filter To Search Services :', servicesFilter);
         services = await dataServiceModel.findAllService({ $or: servicesFilter });
+        logger.debug('Services :', services);
         if (servicesFilter.length !== services.length) {
             return res.status(400).json({ message: 'One or more data services are invalid' });
         }
