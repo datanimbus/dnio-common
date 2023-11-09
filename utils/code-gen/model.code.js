@@ -26,6 +26,7 @@ function genrateCode(config) {
     code.push('async function validateModel(data) {');
     code.push(`\tlet error = null;`);
     code.push(`\ttry {`);
+    code.push(`\t\tlogger.debug('${schema._id}', data);`);
     code.push(`\t\tconst model = mongoose.model('${schema._id}');`);
     code.push(`\t\tconst document = new model(data);`);
     code.push(`\t\tawait document.validate();`);
