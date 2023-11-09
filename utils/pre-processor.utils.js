@@ -261,7 +261,7 @@ async function schemaValidation(req, res, next) {
             //     errors.push({ item, errors: validationErrors.map(e => e.message) });
             // }
 
-            let validationErrors = require(path.join(item.dataService.folderPath, 'model-validation.js')).validateModel(item.data);
+            let validationErrors = await require(path.join(item.dataService.folderPath, 'model-validation.js')).validateModel(item.data);
             if (validationErrors) {
                 cleanData(item);
                 logger.debug('Validation Error Messages:');

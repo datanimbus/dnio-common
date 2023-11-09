@@ -21,7 +21,7 @@ function genrateCode(config) {
     code.push(' * @param {*} data The data to be validated');
     code.push(' * @returns {object[]} Returns related data payloads');
     code.push(' */');
-    code.push('function validateModel(data) {');
+    code.push('async function validateModel(data) {');
     code.push(`\tlet error = null;`);
     code.push(`\ttry {`);
     code.push(`\t\tconst document = new model(data);`);
