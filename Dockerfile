@@ -5,6 +5,9 @@ WORKDIR /tmp/app
 RUN apk update
 RUN apk upgrade
 
+RUN apk add g++ make py3-pip
+RUN set -ex; apk add .fetch-deps curl tar git;
+
 COPY package.json package.json
 
 RUN npm install -g npm
