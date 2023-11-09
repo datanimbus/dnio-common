@@ -3,6 +3,8 @@
  */
 
 const _ = require('lodash');
+
+const globalDefinition = require('./system-definition.utils');
 const commonUtils = require('../utils/common.utils');
 
 const mongooseFields = ['required', 'default', 'index', 'select', 'lowercase', 'uppercase', 'trim', 'match', 'enum', 'min', 'max', 'minlength', 'maxlength'];
@@ -131,6 +133,10 @@ function processSchema(schemaArr, mongoSchema, nestedKey, specialFields) {
 					mongoSchema[key]['type'][0] = {};
 				}
 				processSchema(attribute['definition'], mongoSchema[key]['type'][0], newNestedKey, specialFields);
+			} else if (attribute['type'] === 'Geojson') {
+				mongoSchema[key] = globalDefinition.Geojson;
+			} else if (attribute['type'] === 'File') {
+				mongoSchema[key] = globalDefinition.File;
 			} else if (attribute['type'] === 'Object') {
 				mongoSchema[key] = {};
 				if (attribute['properties'] && attribute['properties']['schemaFree']) {
@@ -148,11 +154,7 @@ function processSchema(schemaArr, mongoSchema, nestedKey, specialFields) {
 				mongoSchema[key]['type'] = {};
 				processSchema(attribute['definition'], mongoSchema[key]['type'], newNestedKey, specialFields);
 
-			}
-			// else if(attribute['type'] === 'Date') {
-
-			// } 
-			else {
+			} else {
 				mongoSchema[key] = {};
 				if (attribute['properties'])
 					mongoSchema[key] = filterMongooseFields(attribute['properties']);
