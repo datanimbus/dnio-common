@@ -17,6 +17,7 @@ const LOGGER_NAME = config.isK8sEnv() ? `[${config.hostname}] [COMMON v${config.
 const logger = log4js.getLogger(LOGGER_NAME);
 logger.level = process.env.LOG_LEVEL || 'info';
 global.activeRequest = 0;
+global.modalInit = {};
 
 // global.logger = logger;
 

@@ -14,9 +14,11 @@ function genrateCode(config) {
     code.push('const { definition } = require(\'./definition.js\');');
     code.push('');
     code.push('const logger = log4js.getLogger(global.loggerName);');
-    code.push('const schema = new mongoose.Schema(definition);');
-    code.push(`const model = mongoose.model('${schema._id}', schema);`);
-
+    code.push(`if (!global.modalInit || !global.modalInit['${schema._id}']) {`);
+    code.push(`\tglobal.modalInit['${schema._id}'] = true;`);
+    code.push('\tconst schema = new mongoose.Schema(definition);');
+    code.push(`\tconst model = mongoose.model('${schema._id}', schema);`);
+    code.push('}');
     code.push('/**');
     code.push(' * @param {*} data The data to be validated');
     code.push(' * @returns {object[]} Returns related data payloads');
