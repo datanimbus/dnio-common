@@ -121,14 +121,14 @@ async function initCodeGen(req, res, next) {
     try {
         logger.debug('Filter To Search Services :', servicesFilter);
         services = await dataServiceModel.findAllService({ $or: servicesFilter });
-        logger.debug('Services :', services);
         if (servicesFilter.length !== services.length) {
             return res.status(400).json({ message: 'One or more data services are invalid' });
         }
-
         if (!services.every(e => e.status == 'Active')) {
             return res.status(400).json({ message: 'One or more data services are offline' });
         }
+        logger.debug('Services Found:', services.length);
+        logger.trace('Services :', services);
         const allServiceIds = _.uniq(_.concat(services.map(e => e._id), _.flattenDeep(services.map(e => (e.relatedSchemas.outgoing || []).map(eo => eo.service)))));
 
         /**
@@ -145,10 +145,12 @@ async function initCodeGen(req, res, next) {
             all.push(temp);
             return;
         }, Promise.resolve());
+        logger.trace('After Code Gen :', all);
         let app;
         let promises = req.body.map(async (e) => {
             const temp = [];
             const srvc = _.find(all, e.dataService);
+            logger.debug('Service Filetred :', srvc);
             e.dataService = srvc;
             app = srvc.app;
             temp.push(e);
