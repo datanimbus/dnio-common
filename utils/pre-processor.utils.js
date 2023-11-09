@@ -128,7 +128,6 @@ async function initCodeGen(req, res, next) {
             return res.status(400).json({ message: 'One or more data services are offline' });
         }
         logger.debug('Services Found:', services.length);
-        logger.trace('Services :', services);
         const allServiceIds = _.uniq(_.concat(services.map(e => e._id), _.flattenDeep(services.map(e => (e.relatedSchemas.outgoing || []).map(eo => eo.service)))));
 
         /**
@@ -145,7 +144,6 @@ async function initCodeGen(req, res, next) {
             all.push(temp);
             return;
         }, Promise.resolve());
-        logger.trace('After Code Gen :', all);
         let app;
         let promises = req.body.map(async (e) => {
             const temp = [];
@@ -212,12 +210,10 @@ async function schemaValidation(req, res, next) {
                 temp.oldData = tempOldData;
             }
             if (item.operation === 'PUT' && !item.upsert && !temp.oldData) {
-                logger.info('Clean Data Called for Upsert Flag');
                 cleanData(item);
                 errors.push({ item, errors: { message: 'Document does not exists.' } });
+                return;
             }
-
-            logger.trace('Schema Validation', item);
 
             // State Model Code
             if (item.dataService.stateModel && item.dataService.stateModel.enabled) {
@@ -226,6 +222,7 @@ async function schemaValidation(req, res, next) {
                     if (newStateValue && !item.dataService.stateModel.initialStates.includes(newStateValue)) {
                         cleanData(item);
                         errors.push({ item, errors: { message: 'Record is not in initial state.' } });
+                        return;
                     }
                     if (!newStateValue) {
                         _.set(item.data, item.dataService.stateModel.attribute, item.dataService.stateModel.initialStates[0]);
@@ -235,9 +232,9 @@ async function schemaValidation(req, res, next) {
                 if (item.operation === 'PUT') {
                     if (!temp.oldData) {
                         if (newStateValue && !item.dataService.stateModel.initialStates.includes(newStateValue)) {
-                            logger.info('Clean Data Called for initialStates');
                             cleanData(item);
                             errors.push({ item, errors: { message: 'Record is not in initial state.' } });
+                            return;
                         }
                         if (!newStateValue) {
                             _.set(item.data, item.dataService.stateModel.attribute, item.dataService.stateModel.initialStates[0]);
@@ -246,9 +243,9 @@ async function schemaValidation(req, res, next) {
                         let oldStateValue = _.get(temp.oldData, item.dataService.stateModel.attribute);
                         let oldState = item.dataService.stateModel.states[oldStateValue];
                         if (newStateValue != oldStateValue && (!oldState || !oldState.includes(newStateValue))) {
-                            logger.info('Clean Data Called For State transition');
                             cleanData(item);
                             errors.push({ item, errors: { message: 'State transition is not allowed.' } });
+                            return;
                         }
                     }
                 }
@@ -272,11 +269,11 @@ async function schemaValidation(req, res, next) {
 
             let validationErrors = await require(path.join(item.dataService.folderPath, 'model-validation.js')).validateModel(item.data);
             if (validationErrors && validationErrors.errors) {
-                logger.info('Clean Data Called at validationErrors');
                 cleanData(item);
                 logger.debug('Validation Error Messages:');
-                logger.debug(JSON.stringify(validationErrors));
+                logger.trace(JSON.stringify(validationErrors));
                 errors.push({ item, errors: validationErrors.errors });
+                return;
             }
 
             return item;
