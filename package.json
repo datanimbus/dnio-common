@@ -28,6 +28,7 @@
     "mkdirp": "^1.0.4",
     "moment": "^2.29.4",
     "mongodb": "^4.9.0",
+    "mongoose": "^8.0.0",
     "node-nats-streaming": "^0.3.2",
     "shorthash": "^0.0.2",
     "uuid": "^8.3.2"
