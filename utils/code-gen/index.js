@@ -23,6 +23,7 @@ const generatedCodePath = path.join(process.cwd(), 'generatedCode');
 async function generateCode(srvc, schemaValidator) {
     const serviceFolder = path.join(generatedCodePath, srvc._id + '_' + srvc.version);
     srvc.folderPath = serviceFolder;
+    logger.info('Folder Path Configured:', srvc.folderPath);
     if (fs.existsSync(serviceFolder)) {
         schemaValidator.removeSchema(srvc._id);
         if (!schemaValidator.getSchema(srvc._id)) {
