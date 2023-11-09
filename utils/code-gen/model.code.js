@@ -15,7 +15,7 @@ function genrateCode(config) {
     code.push('');
     code.push('const logger = log4js.getLogger(global.loggerName);');
     code.push('const schema = new mongoose.Schema(definition);');
-    code.push(`const model = mongoose.Model('${schema._id}', definition);`);
+    code.push(`const model = mongoose.Model('${schema._id}', schema);`);
 
     code.push('/**');
     code.push(' * @param {*} data The data to be validated');
