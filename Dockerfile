@@ -10,8 +10,10 @@ RUN apk add g++ make py3-pip curl tar git
 COPY package.json package.json
 
 RUN npm install -g npm
-RUN npm i --production --no-audit
-# RUN npm audit fix --production
+# RUN npm i --production --no-audit
+RUN npm i --production
+RUN npm audit fix --production
+
 RUN rm -rf /usr/local/lib/node_modules/npm/node_modules/node-gyp/test
 RUN mkdir -p generatedCode
 
