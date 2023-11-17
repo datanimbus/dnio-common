@@ -1,4 +1,5 @@
 const _ = require('lodash');
+const config = require('../../config');
 
 function genrateCode(data) {
     let postHooks = (data.webHooks || []);
@@ -62,7 +63,7 @@ function genrateCode(data) {
         code.push(`\tpostHookLog._metadata.createdAt = new Date();`);
         code.push(`\tpostHookLog._metadata.lastUpdated = new Date();`);
         code.push(`\tpostHookLog._metadata.version = {};`);
-        code.push(`\tpostHookLog._metadata.version.release = '${process.env.RELEASE || 'dev'}';`);
+        code.push(`\tpostHookLog._metadata.version.release = '${config.RELEASE || 'dev'}';`);
         code.push(`\tlet streamingPayload,temp;`);
 
 
