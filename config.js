@@ -1,4 +1,29 @@
+const dataStackUtils = require('@appveen/data.stack-utils');
+const log4js = require('log4js');
+
+const LOGGER_NAME = (
+    process.env.KUBERNETES_SERVICE_HOST &&
+    process.env.KUBERNETES_SERVICE_PORT
+  )
+    ? `[${process.env.HOSTNAME ?? 'unknown'}] [COMMON v${process.env.IMAGE_TAG || '1.0.0'}]`
+    : `[COMMON v${process.env.IMAGE_TAG || '1.0.0'}]`;
+  
+const logger = log4js.getLogger(LOGGER_NAME);
+logger.level = process.env.LOG_LEVEL || 'info';
+
 const e = {};
+let envVariables = {};
+
+e.fetchEnvironmentVariablesFromDB = async () => {
+    try {
+        envVariables = await dataStackUtils.database.fetchEnvVariables();
+		return envVariables;
+    } catch (error) {
+        logger.error(error);
+        logger.error('Fetching environment variables failed. Crashing the component.');
+        process.exit(1);
+    }
+}
 
 e.isK8sEnv = function () {
     return process.env.KUBERNETES_SERVICE_HOST && process.env.KUBERNETES_SERVICE_PORT;
@@ -15,13 +40,13 @@ function parseBoolean(val) {
 e.port = process.env.PORT || 3000;
 e.httpsPort = process.env.HTTPS_PORT || 3443;
 e.imageTag = process.env.IMAGE_TAG || '1.0.0';
-e.hookConnectionTimeout = parseInt(process.env.HOOK_CONNECTION_TIMEOUT) || 30;
+e.hookConnectionTimeout = parseInt(envVariables.HOOK_CONNECTION_TIMEOUT) || 30;
 e.mongoDataUrl = process.env.MONGO_APPCENTER_URL || 'mongodb://localhost:27017';
 e.authorDB = process.env.MONGO_AUTHOR_DBNAME || 'datastackConfig';
 e.mongoAuthorUrl = process.env.MONGO_AUTHOR_URL || 'mongodb://localhost:27017';
 e.mongoLogUrl = process.env.MONGO_LOGS_URL || 'mongodb://localhost:27017';
 e.logsDB = process.env.MONGO_LOGS_DBNAME || 'datastackLogs';
-e.googleKey = process.env.GOOGLE_API_KEY || '';
+e.googleKey = envVariables.GOOGLE_API_KEY || '';
 e.queueName = 'webHooks';
 e.streamingConfig = {
     url: process.env.STREAMING_HOST || 'nats://localhost:4222',
@@ -59,9 +84,9 @@ e.allowedExt = (process.env.ALLOWED_FILE_TYPES ? process.env.ALLOWED_FILE_TYPES 
 e.hostname = process.env.HOSTNAME;
 e.namespace = process.env.DATA_STACK_NAMESPACE || 'appveen';
 e.permanentDelete = process.env.PERMANENT_DELETE ? parseBoolean(process.env.PERMANENT_DELETE) : true;
-e.MaxJSONSize = process.env.MAX_JSON_SIZE || '1mb';
-e.dataStackDefaultTimezone = process.env.TZ_DEFAULT || 'Zulu';
-e.release = process.env.RELEASE || '1.1.0';
+e.MaxJSONSize = envVariables.MAX_JSON_SIZE || '1mb';
+e.dataStackDefaultTimezone = envVariables.TZ_DEFAULT || 'Zulu';
+e.release = envVariables.RELEASE || '1.1.0';
 
 
 e.baseUrlSM = get('sm') + '/sm';
@@ -73,7 +98,7 @@ e.baseUrlSEC = get('sec') + '/sec';
 e.baseUrlDM = get('dm') + '/dm';
 e.baseUrlPM = get('bm') + '/bm';
 e.baseUrlGW = get('gw');
-e.RBAC_JWT_KEY = process.env.RBAC_JWT_KEY || 'u?5k167v13w5fhjhuiweuyqi67621gqwdjavnbcvadjhgqyuqagsduyqtw87e187etqiasjdbabnvczmxcnkzn';
+e.RBAC_JWT_KEY = envVariables.RBAC_JWT_KEY || 'u?5k167v13w5fhjhuiweuyqi67621gqwdjavnbcvadjhgqyuqagsduyqtw87e187etqiasjdbabnvczmxcnkzn';
 
 
 function get(_service) {
@@ -101,5 +126,6 @@ function get(_service) {
         if (_service == 'gw') return 'http://localhost:9080';
     }
 }
+e.TLS_REJECT_UNAUTHORIZED = envVariables.TLS_REJECT_UNAUTHORIZED || false;
 
 module.exports = e;

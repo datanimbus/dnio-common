@@ -211,7 +211,7 @@ async function getGeoDetails(req, path, address) {
  * @param {string} data.txnId The TxnId of the Request
  */
 function invokeHook(data) {
-    let timeout = (process.env.HOOK_CONNECTION_TIMEOUT && parseInt(process.env.HOOK_CONNECTION_TIMEOUT)) || 30;
+    let timeout = (config.hookConnectionTimeout && parseInt(config.hookConnectionTimeout)) || 30;
     data.payload.properties = data.payload.properties || commonUtils.generateProperties(data.txnId);
     let headers = data.headers || commonUtils.generateHeaders(data.txnId);
     headers['Content-Type'] = 'application/json';
@@ -224,7 +224,7 @@ function invokeHook(data) {
         json: data.payload,
         timeout: timeout * 1000
     };
-    if (typeof process.env.TLS_REJECT_UNAUTHORIZED === 'string' && process.env.TLS_REJECT_UNAUTHORIZED.toLowerCase() === 'false') {
+    if (typeof config.TLS_REJECT_UNAUTHORIZED === 'string' && config.TLS_REJECT_UNAUTHORIZED.toLowerCase() === 'false') {
         options.insecure = true;
         options.rejectUnauthorized = false;
     }
@@ -254,7 +254,7 @@ function invokeHook(data) {
  */
 function invokeFunction(data, req) {
     logger.info(`Invoking Function :: ${JSON.stringify(data.hook)}`)
-    let timeout = (process.env.HOOK_CONNECTION_TIMEOUT && parseInt(process.env.HOOK_CONNECTION_TIMEOUT)) || 30;
+    let timeout = (config.hookConnectionTimeout && parseInt(config.hookConnectionTimeout)) || 30;
     data.payload.properties = data.payload.properties || commonUtils.generateProperties(data.txnId);
     let headers = data.headers || commonUtils.generateHeaders(data.txnId);
     headers['Content-Type'] = 'application/json';
@@ -268,7 +268,7 @@ function invokeFunction(data, req) {
         json: data.payload,
         timeout: timeout * 1000
     };
-    if (typeof process.env.TLS_REJECT_UNAUTHORIZED === 'string' && process.env.TLS_REJECT_UNAUTHORIZED.toLowerCase() === 'false') {
+    if (typeof config.TLS_REJECT_UNAUTHORIZED === 'string' && config.TLS_REJECT_UNAUTHORIZED.toLowerCase() === 'false') {
         options.insecure = true;
         options.rejectUnauthorized = false;
     }
