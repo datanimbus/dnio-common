@@ -1,6 +1,6 @@
 {
   "name": "ds-transaction",
-  "version": "2.8.0",
+  "version": "2.8.1",
   "description": "This README would normally document whatever steps are necessary to get your application up and running.",
   "main": "app.js",
   "scripts": {
