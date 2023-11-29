@@ -25,4 +25,6 @@ ENV IMAGE_TAG=__image_tag__
 EXPOSE 3000
 EXPOSE 3443
 
+RUN chmod -R 777 /tmp/app
+
 CMD [ "node", "app.js" ]
