@@ -148,7 +148,7 @@ async function initCodeGen(req, res, next) {
         let promises = req.body.map(async (e) => {
             const temp = [];
             const srvc = _.find(all, e.dataService);
-            logger.debug('Service Filetred :', srvc);
+            logger.debug('Service Filtered :', srvc);
             e.dataService = _.cloneDeep(srvc);
             app = srvc.app;
             temp.push(e);

@@ -45,6 +45,7 @@ async function executeTransaction(req, payload) {
                     item.data._metadata.version.document = 1;
                     status = await dataDB.collection(item.dataService.collectionName).insertOne(item.data, { session });
                     id = status.insertedId;
+                    logger.debug('POST Operation :: ', status);
                 } else if (item.operation === 'PUT') {
                     delete item.data._id;
                     // const oldData = await dataDB.collection(item.dataService.collectionName).findOne({ _id: id }, { session });
@@ -57,9 +58,11 @@ async function executeTransaction(req, payload) {
                         item.data = _.merge(item.oldData, item.data);
                         status = await dataDB.collection(item.dataService.collectionName).findOneAndUpdate(item.filter, { $set: item.data }, { session, upsert: item.upsert, returnDocument: 'after' });
                     }
+                    logger.debug('PUT Operation :: ', status);
                     await dataDB.collection(item.dataService.collectionName).findOneAndUpdate(item.filter, { $inc: { '_metadata.version.document': 1 } }, { session });
                 } else if (item.operation === 'DELETE') {
                     status = await dataDB.collection(item.dataService.collectionName).findOneAndDelete(item.filter, { session });
+                    logger.debug('DELETE Operation :: ', status);
                 }
                 if (item.operation === 'POST') {
                     result = await dataDB.collection(item.dataService.collectionName).findOne({ _id: id }, { session });
