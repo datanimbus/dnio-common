@@ -59,6 +59,9 @@ async function executeTransaction(req, payload) {
                         status = await dataDB.collection(item.dataService.collectionName).findOneAndUpdate(item.filter, { $set: item.data }, { session, upsert: item.upsert, returnDocument: 'after' });
                     }
                     logger.debug('PUT Operation :: ', status);
+                    if (!status.value) {
+                        throw new Error('Couldn\'t find matching document');
+                    }
                     await dataDB.collection(item.dataService.collectionName).findOneAndUpdate(item.filter, { $inc: { '_metadata.version.document': 1 } }, { session });
                 } else if (item.operation === 'DELETE') {
                     status = await dataDB.collection(item.dataService.collectionName).findOneAndDelete(item.filter, { session });
