@@ -39,14 +39,20 @@ function encryptUsingPublicKey(text, key) {
 }
 
 function decryptUsingPrivateKey(text, key) {
-	let textParts = text.split(':');
-	let initializationVector = Buffer.from(textParts.shift(), 'hex');
-	let iv = crypto.privateDecrypt(key, initializationVector);
-	let encryptedText = Buffer.from(textParts.join(':'), 'hex');
-	let decipher = crypto.createDecipheriv('aes-256-cbc', Buffer.from(SECRET), iv);
-	let decrypted = decipher.update(encryptedText);
-	decrypted = Buffer.concat([decrypted, decipher.final()]);
-	return decrypted.toString();
+	let decrypted;
+	try {
+		let textParts = text.split(':');
+		let initializationVector = Buffer.from(textParts.shift(), 'hex');
+		let iv = crypto.privateDecrypt(key, initializationVector);
+		let encryptedText = Buffer.from(textParts.join(':'), 'hex');
+		let decipher = crypto.createDecipheriv('aes-256-cbc', Buffer.from(SECRET), iv);
+		decrypted = decipher.update(encryptedText);
+		decrypted = Buffer.concat([decrypted, decipher.final()]);
+		decrypted =  decrypted.toString();
+	} catch (err) {
+		logger.error('Error decrypting text using private key :: ', err);
+	}
+	return decrypted;
 }
 
 // function encrypt(plainText, secret) {
@@ -66,11 +72,16 @@ function decryptUsingPrivateKey(text, key) {
 
 
 function decrypt(cipherText, secret) {
-	const key = crypto.createHash('sha256').update(secret).digest('base64').substring(0, 32);
-	const iv = Buffer.from(cipherText.split(':')[0], 'hex');
-	const textBytes = cipherText.split(':')[1];
-	const decipher = crypto.createDecipheriv('aes-256-cbc', key, iv);
-	let decrypted = decipher.update(textBytes, 'hex', 'utf8');
-	decrypted += decipher.final('utf8');
+	let decrypted;
+	try {
+		const key = crypto.createHash('sha256').update(secret).digest('base64').substring(0, 32);
+		const iv = Buffer.from(cipherText.split(':')[0], 'hex');
+		const textBytes = cipherText.split(':')[1];
+		const decipher = crypto.createDecipheriv('aes-256-cbc', key, iv);
+		let decrypted = decipher.update(textBytes, 'hex', 'utf8');
+		decrypted += decipher.final('utf8');
+	} catch (err) {
+		logger.error('Error decrypting text :: ', err);
+	}
 	return decrypted;
 }
