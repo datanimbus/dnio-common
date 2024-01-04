@@ -21,26 +21,26 @@ global.falseBooleanValues = ['n', 'no', 'false', '0'];
 
 async function connectToDatastackConfig() {
 	try {
-	  await mongoose.connect(config.mongoAuthorUrl, {
-		useNewUrlParser: true,
-		dbName: process.env.MONGO_AUTHOR_DBNAME || 'datastackConfig',
-	  });
+		await mongoose.connect(config.mongoAuthorUrl, {
+			useNewUrlParser: true,
+			dbName: process.env.MONGO_AUTHOR_DBNAME || 'datastackConfig',
+		});
 
-	  logger.info('DB :: DatastackConfig :: Connected');
-  
-	  // fetch environment variables
-	  const envVariables = await fetchEnvironmentVariablesFromDB();
-	  return envVariables;
+		logger.info('DB :: DatastackConfig :: Connected');
+
+		// fetch environment variables
+		const envVariables = await fetchEnvironmentVariablesFromDB();
+		return envVariables;
 	} catch (error) {
-	  logger.error('Error connecting to DatastackConfig database:', error.message);
-	  throw error;
+		logger.error('Error connecting to DatastackConfig database:', error.message);
+		throw error;
 	}
 }
 
 (async () => {
 	try {
 		const envVariables = await connectToDatastackConfig();
-	
+
 		const client = await MongoClient.connect(config.mongoAuthorUrl);
 		logger.info('Connected to ', config.authorDB);
 		const authorDB = client.db(config.authorDB);
@@ -48,6 +48,9 @@ async function connectToDatastackConfig() {
 		global.isTransactionAllowed = false;
 		try {
 			authorDB.admin().command({ 'replSetGetStatus': 1 }, async function (err, replicaSetStatus) {
+				if (err) {
+					logger.error('Error in Runing ReplicaSet Command :: ', err);
+				}
 				logger.trace('Replica Status :: ', replicaSetStatus);
 				if (replicaSetStatus) {
 					let dbVersion = (await authorDB.admin().serverInfo()).version;
@@ -60,7 +63,7 @@ async function connectToDatastackConfig() {
 		} catch (e) {
 			logger.error('Error in setIsTransactionAllowed :: ', e);
 		}
-	  } catch (error) {
+	} catch (error) {
 		logger.error('Error:', error);
-	  }
+	}
 })();
