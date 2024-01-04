@@ -40,7 +40,7 @@ async function connectToDatastackConfig() {
 (async () => {
 	try {
 		const envVariables = await connectToDatastackConfig();
-
+		logger.trace(envVariables);
 		const client = await MongoClient.connect(config.mongoAuthorUrl);
 		logger.info('Connected to ', config.authorDB);
 		const authorDB = client.db(config.authorDB);

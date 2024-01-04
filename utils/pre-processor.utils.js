@@ -131,8 +131,8 @@ async function initCodeGen(req, res, next) {
 		const allServiceIds = _.uniq(_.concat(services.map(e => e._id), _.flattenDeep(services.map(e => (e.relatedSchemas.outgoing || []).map(eo => eo.service)))));
 
 		/**
-         * @description Make another DB call only if relation exists.
-         */
+		 * @description Make another DB call only if relation exists.
+		 */
 		if (allServiceIds.length != servicesFilter.length) {
 			services = await dataServiceModel.findAllService({ _id: { $in: allServiceIds } });
 		}
@@ -185,22 +185,22 @@ async function preHookValidation(req, res, next) {
 		res.status(500).json({ message: err.message });
 	}
 }
+function cleanData(item) {
+	delete item.oldData;
+	delete item.temp;
+	const srvcId = item.dataService._id;
+	const srvcName = item.dataService.name;
+	const srvcApp = item.dataService.app;
+	delete item.dataService;
+	item.dataService = {
+		_id: srvcId,
+		name: srvcName,
+		app: srvcApp
+	};
+}
 
 async function schemaValidation(req, res, next) {
 	try {
-		function cleanData(item) {
-			delete item.oldData;
-			delete item.temp;
-			const srvcId = item.dataService._id;
-			const srvcName = item.dataService.name;
-			const srvcApp = item.dataService.app;
-			delete item.dataService;
-			item.dataService = {
-				_id: srvcId,
-				name: srvcName,
-				app: srvcApp
-			};
-		}
 		const errors = [];
 		let promises = req.body.body.map(async (item) => {
 			const temp = await dataServiceModel.patchOldRecord(item);
@@ -275,10 +275,9 @@ async function schemaValidation(req, res, next) {
 				errors.push({ item, errors: validationErrors.errors });
 				return;
 			}
-
 			return item;
 		});
-		promises = await Promise.all(promises);
+		await Promise.all(promises);
 		if (errors && errors.length > 0) {
 			return res.status(400).json({ errors, message: 'Schema Validation Failed' });
 		}

@@ -90,7 +90,6 @@ async function executeTransaction(req, payload) {
 				}
 			} finally {
 				results.push(oneResult);
-				return;
 			}
 		}, Promise.resolve());
 		if (!results.every(e => e.statusCode == 200)) {

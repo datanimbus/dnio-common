@@ -8,6 +8,29 @@ const secUtils = require('./security-utils');
 
 const logger = log4js.getLogger(global.loggerName);
 
+function getGenericHeaders() {
+	return {
+		'Data-Stack-DS-Name': config.serviceName,
+	};
+}
+
+function generateHeaders(_txnId) {
+	let headers = require('../../service.json').headers;
+	let generatedHeaders = getGenericHeaders();
+	logger.trace(`[${_txnId}] Service headers :: ${JSON.stringify(headers)}`);
+	headers.forEach(_header => generatedHeaders[_header.header] = _header.value);
+	logger.trace(`[${_txnId}] Generated headers :: ${JSON.stringify(generatedHeaders)}`);
+	return generatedHeaders;
+}
+
+function generateProperties(_txnId) {
+	let headers = require('../../service.json').headers;
+	let properties = {};
+	logger.trace(`[${_txnId}] Service properties :: ${JSON.stringify(headers)}`);
+	headers.forEach(_header => properties[_header.key] = _header.value);
+	logger.trace(`[${_txnId}] Generated properties :: ${JSON.stringify(properties)}`);
+	return properties;
+}
 
 /**
  * 
@@ -212,8 +235,8 @@ async function getGeoDetails(req, path, address) {
  */
 function invokeHook(data) {
 	let timeout = (config.hookConnectionTimeout && parseInt(config.hookConnectionTimeout)) || 30;
-	data.payload.properties = data.payload.properties || commonUtils.generateProperties(data.txnId);
-	let headers = data.headers || commonUtils.generateHeaders(data.txnId);
+	data.payload.properties = data.payload.properties || generateProperties(data.txnId);
+	let headers = data.headers || generateHeaders(data.txnId);
 	headers['Content-Type'] = 'application/json';
 	headers['TxnId'] = data.txnId;
 	var options = {
@@ -229,7 +252,7 @@ function invokeHook(data) {
 		options.rejectUnauthorized = false;
 	}
 	return httpClient.httpRequest(options)
-	// .then(res => res)
+		// .then(res => res)
 		.catch(err => {
 			logger.error(`Error requesting hook :: ${options.url} :: ${err.message}`);
 			const message = data.hook.failMessage ? data.hook.failMessage : `Pre-save "${data.hook.name}" down! Unable to proceed.`;
@@ -255,8 +278,8 @@ function invokeHook(data) {
 function invokeFunction(data, req) {
 	logger.info(`Invoking Function :: ${JSON.stringify(data.hook)}`);
 	let timeout = (config.hookConnectionTimeout && parseInt(config.hookConnectionTimeout)) || 30;
-	data.payload.properties = data.payload.properties || commonUtils.generateProperties(data.txnId);
-	let headers = data.headers || commonUtils.generateHeaders(data.txnId);
+	data.payload.properties = data.payload.properties || generateProperties(data.txnId);
+	let headers = data.headers || generateHeaders(data.txnId);
 	headers['Content-Type'] = 'application/json';
 	headers['TxnId'] = data.txnId;
 	headers['Authorization'] = req.headers['authorization'];
@@ -273,7 +296,7 @@ function invokeFunction(data, req) {
 		options.rejectUnauthorized = false;
 	}
 	return httpClient.httpRequest(options)
-	// .then(res => res)
+		// .then(res => res)
 		.catch(err => {
 			logger.error(`Error requesting function :: ${options.url} :: ${err.message}`);
 			const message = data.hook.failMessage ? data.hook.failMessage : `Pre-save "${data.hook.name}" down! Unable to proceed.`;
