@@ -5,7 +5,7 @@ const log4js = require('log4js');
 const config = require('./config');
 const { fetchEnvironmentVariablesFromDB } = require('./config');
 
-const LOGGER_NAME = config.isK8sEnv() ? `[${config.hostname}] [COMMON v${config.imageTag}]` : `[COMMON v${config.imageTag}]`
+const LOGGER_NAME = config.isK8sEnv() ? `[${config.hostname}] [COMMON v${config.imageTag}]` : `[COMMON v${config.imageTag}]`;
 const logger = log4js.getLogger(LOGGER_NAME);
 logger.level = process.env.LOG_LEVEL || 'info';
 
@@ -21,26 +21,26 @@ global.falseBooleanValues = ['n', 'no', 'false', '0'];
 
 async function connectToDatastackConfig() {
 	try {
-	  await mongoose.connect(config.mongoAuthorUrl, {
-		useNewUrlParser: true,
-		dbName: process.env.MONGO_AUTHOR_DBNAME || 'datastackConfig',
-	  });
+		await mongoose.connect(config.mongoAuthorUrl, {
+			useNewUrlParser: true,
+			dbName: process.env.MONGO_AUTHOR_DBNAME || 'datastackConfig',
+		});
 
-	  logger.info('DB :: DatastackConfig :: Connected');
-  
-	  // fetch environment variables
-	  const envVariables = await fetchEnvironmentVariablesFromDB();
-	  return envVariables;
+		logger.info('DB :: DatastackConfig :: Connected');
+
+		// fetch environment variables
+		const envVariables = await fetchEnvironmentVariablesFromDB();
+		return envVariables;
 	} catch (error) {
-	  logger.error('Error connecting to DatastackConfig database:', error.message);
-	  throw error;
+		logger.error('Error connecting to DatastackConfig database:', error.message);
+		throw error;
 	}
 }
 
 (async () => {
 	try {
 		const envVariables = await connectToDatastackConfig();
-	
+
 		const client = await MongoClient.connect(config.mongoAuthorUrl);
 		logger.info('Connected to ', config.authorDB);
 		const authorDB = client.db(config.authorDB);
@@ -60,7 +60,7 @@ async function connectToDatastackConfig() {
 		} catch (e) {
 			logger.error('Error in setIsTransactionAllowed :: ', e);
 		}
-	  } catch (error) {
+	} catch (error) {
 		logger.error('Error:', error);
-	  }
+	}
 })();

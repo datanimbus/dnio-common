@@ -22,82 +22,82 @@ async function genrateCode(config) {
 	code.push('const idGenerator = {};');
 
 
-	relatedServices = await dataServiceModel.findAllService({ _id: { $in: relatedServiceIds } });
+	let relatedServices = await dataServiceModel.findAllService({ _id: { $in: relatedServiceIds } });
 
 
-	code.push(`serviceFunctionMap['USER'] = async function(req, id, dataDB, session) {`);
-	code.push(`\ttry {`);
-	code.push(`\t\tlet doc = await global.authorDB.collection('userMgmt.users').findOne({ _id: id });`);
-	code.push(`\t\tif (doc) {`);
-	code.push(`\t\t\tdoc._href = \`/api/a/rbac/user/\${doc._id}\`;`);
-	code.push(`\t\t}`);
-	code.push(`\t\treturn doc;`);
-	code.push(`\t} catch (e) {`);
-	code.push(`\t\tlogger.error('[serviceFunctionMap] [USER]', e);`);
-	code.push(`\t\tthrow e;`);
-	code.push(`\t}`);
-	code.push(`};`);
+	code.push('serviceFunctionMap[\'USER\'] = async function(req, id, dataDB, session) {');
+	code.push('\ttry {');
+	code.push('\t\tlet doc = await global.authorDB.collection(\'userMgmt.users\').findOne({ _id: id });');
+	code.push('\t\tif (doc) {');
+	code.push('\t\t\tdoc._href = `/api/a/rbac/user/${doc._id}`;');
+	code.push('\t\t}');
+	code.push('\t\treturn doc;');
+	code.push('\t} catch (e) {');
+	code.push('\t\tlogger.error(\'[serviceFunctionMap] [USER]\', e);');
+	code.push('\t\tthrow e;');
+	code.push('\t}');
+	code.push('};');
 
 	relatedServices.map(srvc => {
 		const idDetails = srvc.definition[0];
 		code.push(`serviceFunctionMap['SRVC_${srvc._id}'] = async function(req, id, dataDB, session) {`);
-		code.push(`\ttry {`);
+		code.push('\ttry {');
 		code.push(`\t\tlet doc = await dataDB.collection('${srvc.collectionName}').findOne({ _id: id }, { session });`);
-		code.push(`\t\tif (doc) {`);
+		code.push('\t\tif (doc) {');
 		code.push(`\t\t\tdoc._href = \`/api/c/${srvc.app}${srvc.api}/\${doc._id}\`;`);
-		code.push(`\t\t}`);
-		code.push(`\t\treturn doc;`);
-		code.push(`\t} catch (e) {`);
+		code.push('\t\t}');
+		code.push('\t\treturn doc;');
+		code.push('\t} catch (e) {');
 		code.push(`\t\tlogger.error('[serviceFunctionMap] [SRVC_${srvc._id}]', e);`);
-		code.push(`\t\tthrow e;`);
-		code.push(`\t}`);
-		code.push(`};`);
+		code.push('\t\tthrow e;');
+		code.push('\t}');
+		code.push('};');
 
 		code.push(`serviceFunctionMapUpsert['SRVC_${srvc._id}'] = async function(req, data, dataDB, session) {`);
-		code.push(`\ttry {`);
-		code.push(`\t\tlet status;`);
-		code.push(`\t\tif (!data._id) {`);
+		code.push('\ttry {');
+		code.push('\t\tlet status;');
+		code.push('\t\tif (!data._id) {');
 		code.push(`\t\t\tawait idGenerator['SRVC_${srvc._id}'](req, data);`);
 		code.push(`\t\t\tstatus = await dataDB.collection('${srvc.collectionName}').insertOne(data, { session });`);
-		code.push(`\t\t\treturn status.insertedId;`);
-		code.push(`\t\t} else {`);
+		code.push('\t\t\treturn status.insertedId;');
+		code.push('\t\t} else {');
 		code.push(`\t\t\tstatus = await dataDB.collection('${srvc.collectionName}').updateOne({ _id: id }, data, { session, upsert: true, returnDocument: 'after' });`);
-		code.push(`\t\t\treturn status.value._id;`);
-		code.push(`\t\t}`);
-		code.push(`\t} catch (e) {`);
+		code.push('\t\t\treturn status.value._id;');
+		code.push('\t\t}');
+		code.push('\t} catch (e) {');
 		code.push(`\t\tlogger.error('[serviceFunctionMapUpsert] [SRVC_${srvc._id}]', e);`);
-		code.push(`\t\tthrow e;`);
-		code.push(`\t}`);
-		code.push(`};`);
+		code.push('\t\tthrow e;');
+		code.push('\t}');
+		code.push('};');
 
 
 
 		code.push(`idGenerator['SRVC_${srvc._id}'] = async function(req, newData, oldData) {`);
-		code.push(`\tconst client = await MongoClient.connect(config.mongoDataUrl);`);
+		code.push('\tconst client = await MongoClient.connect(config.mongoDataUrl);');
 		code.push(`\tconst counterCol = client.db(config.namespace + '-${srvc.app}').collection('counters');`);
 		if (idDetails.counter) {
-			code.push(`\ttry {`);
+			code.push('\ttry {');
 			code.push(`\t\tawait counterCol.insert({ _id: '${srvc.collectionName}', next: ${idDetails.counter} });`);
-			code.push(`\t\tlogger.info('Counter Value Initialised');`);
-			code.push(`\t} catch (err) {`);
-			code.push(`\t\tlogger.warn('Counter Value Exists');`);
-			code.push(`\t}`);
+			code.push('\t\tlogger.info(\'Counter Value Initialised\');');
+			code.push('\t} catch (err) {');
+			code.push('\t\tlogger.warn(\'Counter Value Exists\');');
+			code.push('\t}');
 		}
-		code.push(`\ttry {`);
-		code.push(`\t\tlet id = null;`);
+		code.push('\ttry {');
+		code.push('\t\tlet id = null;');
 		code.push(`\t\tlet doc = await counterCol.findOneAndUpdate({ _id: '${srvc.collectionName}' }, { $inc: { next: 1 } }, { upsert: true, returnDocument: 'after' });`);
 		if (idDetails.padding) {
 			code.push(`\t\tid = '${idDetails.prefix || ''}' + _.padStart((doc.value.next + ''), ${idDetails.padding || 0}, '0') + '${idDetails.suffix || ''}';`);
 		} else {
 			code.push(`\t\tid = '${idDetails.prefix || ''}' + doc.value.next + '${idDetails.suffix || ''}';`);
 		}
-		code.push(`\t\tnewData._id = id;`);
-		code.push(`\t} catch (err) {`);
-		code.push(`\t\tthrow err;`);
-		code.push(`\t} finally {`);
-		code.push(`\t\tawait client.close(true);`);
-		code.push(`\t}`);
-		code.push(`}`);
+		code.push('\t\tnewData._id = id;');
+		code.push('\t} catch (err) {');
+		code.push('\t\tthrow err;');
+		code.push('\t} finally {');
+		code.push('\t\tawait client.close(true);');
+		code.push('\t}');
+		code.push('}');
 
 
 	});
