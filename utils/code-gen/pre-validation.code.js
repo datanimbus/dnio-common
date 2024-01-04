@@ -162,6 +162,8 @@ function genrateCode(data) {
 	// code.push('\tif (errors && Object.keys(errors).length > 0) return errors;');
 	code.push('\terrors = await encryptSecureFields(req, item.data, item.oldData);');
 	code.push('\tif (errors && Object.keys(errors).length > 0) return errors;');
+	code.push('\terrors = await fixPrecision(req, item.data, item.oldData);');
+	code.push('\tif (errors && Object.keys(errors).length > 0) return errors;');
 	code.push('\terrors = await fixBoolean(req, item.data, item.oldData);');
 	code.push('\tif (errors && Object.keys(errors).length > 0) return errors;');
 	code.push('\terrors = await enrichGeojson(req, item.data, item.oldData);');
