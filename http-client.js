@@ -28,32 +28,32 @@ const crypto = require('crypto');
  * @param {Options} options 
  */
 async function httpRequest(options) {
-    try {
-        if (!options) {
-            options = {};
-        }
-        if (!options.method) {
-            options.method = 'GET';
-        }
-        options.responseType = 'json';
-        if (!options['headers']) {
-            options['headers'] = {};
-        }
-        if (!options['headers']['TxnId']) {
-            options['headers']['TxnId'] = `${sh.unique(crypto.createHash('md5').update(Date.now().toString()).digest('hex'))}`;
-        }
-        if (!options['headers']['Content-Type']) {
-            options['headers']['Content-Type'] = `application/json`;
-        }
-        const resp = await got(options);
-        return { statusCode: resp.statusCode, body: resp.body };
-    } catch (err) {
-        if (err.response) {
-            throw { statusCode: err.response.statusCode, body: err.response.body };
-        } else {
-            throw { statusCode: 500, body: err };
-        }
-    }
+	try {
+		if (!options) {
+			options = {};
+		}
+		if (!options.method) {
+			options.method = 'GET';
+		}
+		options.responseType = 'json';
+		if (!options['headers']) {
+			options['headers'] = {};
+		}
+		if (!options['headers']['TxnId']) {
+			options['headers']['TxnId'] = `${sh.unique(crypto.createHash('md5').update(Date.now().toString()).digest('hex'))}`;
+		}
+		if (!options['headers']['Content-Type']) {
+			options['headers']['Content-Type'] = 'application/json';
+		}
+		const resp = await got(options);
+		return { statusCode: resp.statusCode, body: resp.body };
+	} catch (err) {
+		if (err.response) {
+			throw { statusCode: err.response.statusCode, body: err.response.body };
+		} else {
+			throw { statusCode: 500, body: err };
+		}
+	}
 }
 
 module.exports.httpRequest = httpRequest;

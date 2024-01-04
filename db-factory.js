@@ -5,7 +5,7 @@ const log4js = require('log4js');
 const config = require('./config');
 const { fetchEnvironmentVariablesFromDB } = require('./config');
 
-const LOGGER_NAME = config.isK8sEnv() ? `[${config.hostname}] [COMMON v${config.imageTag}]` : `[COMMON v${config.imageTag}]`
+const LOGGER_NAME = config.isK8sEnv() ? `[${config.hostname}] [COMMON v${config.imageTag}]` : `[COMMON v${config.imageTag}]`;
 const logger = log4js.getLogger(LOGGER_NAME);
 logger.level = process.env.LOG_LEVEL || 'info';
 

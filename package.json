@@ -5,7 +5,7 @@
   "main": "app.js",
   "scripts": {
     "start": "node app.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "lint": "./node_modules/.bin/eslint app.js config.js db-factory.js http-client.js queue.js models/ routes/ utils/  --fix"
   },
   "repository": {
     "type": "git",
@@ -39,6 +39,7 @@
     "@types/log4js": "^2.3.5",
     "@types/moment": "^2.13.0",
     "@types/mongodb": "^4.0.7",
-    "dotenv": "^16.0.0"
+    "dotenv": "^16.0.0",
+    "eslint": "^7.19.0"
   }
 }
