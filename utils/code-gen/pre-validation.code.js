@@ -20,38 +20,38 @@ function genrateCode(data) {
 	code.push('');
 
 
-	code.push(`async function generateId(req, newData, oldData) {`);
-	code.push(`	const client = await MongoClient.connect(config.mongoDataUrl);`);
+	code.push('async function generateId(req, newData, oldData) {');
+	code.push('	const client = await MongoClient.connect(config.mongoDataUrl);');
 	code.push(`	const counterCol = client.db(config.namespace + '-${data.app}').collection('counters');`);
 	if (idDetails.counter) {
-		code.push(` try {`);
+		code.push(' try {');
 		code.push(`		await counterCol.insert({ _id: '${data.collectionName}', next: ${idDetails.counter} });`);
-		code.push(`		logger.info('Counter Value Initialised');`);
-		code.push(`	} catch (err) {`);
-		code.push(`		logger.warn('Counter Value Exists');`);
-		code.push(`	}`);
+		code.push('		logger.info(\'Counter Value Initialised\');');
+		code.push('	} catch (err) {');
+		code.push('		logger.warn(\'Counter Value Exists\');');
+		code.push('	}');
 	}
-	code.push(`	try {`);
-	code.push(`		let id = null;`);
+	code.push('	try {');
+	code.push('		let id = null;');
 	code.push(`		let doc = await counterCol.findOneAndUpdate({ _id: '${data.collectionName}' }, { $inc: { next: 1 } }, { upsert: true, returnDocument: 'after' });`);
 	if (idDetails.padding) {
 		code.push(`		id = '${idDetails.prefix || ''}' + _.padStart((doc.value.next + ''), ${idDetails.padding || 0}, '0') + '${idDetails.suffix || ''}';`);
 	} else {
 		code.push(`		id = '${idDetails.prefix || ''}' + doc.value.next + '${idDetails.suffix || ''}';`);
 	}
-	code.push(`		newData._id = id;`);
-	code.push(`	} catch (err) {`);
-	code.push(`		throw err;`);
-	code.push(`	} finally {`);
-	code.push(`		await client.close(true);`);
-	code.push(`	}`);
-	code.push(`}`);
-	code.push(``);
-	code.push(`function rand(_i) {`);
-	code.push(`	var i = Math.pow(10, _i - 1);`);
-	code.push(`	var j = Math.pow(10, _i) - 1;`);
-	code.push(`	return ((Math.floor(Math.random() * (j - i + 1)) + i));`);
-	code.push(`};`);
+	code.push('		newData._id = id;');
+	code.push('	} catch (err) {');
+	code.push('		throw err;');
+	code.push('	} finally {');
+	code.push('		await client.close(true);');
+	code.push('	}');
+	code.push('}');
+	code.push('');
+	code.push('function rand(_i) {');
+	code.push('	var i = Math.pow(10, _i - 1);');
+	code.push('	var j = Math.pow(10, _i) - 1;');
+	code.push('	return ((Math.floor(Math.random() * (j - i + 1)) + i));');
+	code.push('};');
 
 
 

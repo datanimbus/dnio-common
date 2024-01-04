@@ -15,21 +15,21 @@ const logger = log4js.getLogger(global.loggerName);
  * @param {*} data The data to encrypt
  */
 async function encryptText(req, app, data) {
-    data = data.toString();
-    try {
-        const res = await secUtils.encryptText(req, app, data);
-        if (res.statusCode === 200) {
-            return {
-                value: res.body.data,
-                checksum: crypto.createHash('md5').update(data).digest('hex')
-            };
-        } else {
-            throw new Error('Error encrypting text');
-        }
-    } catch (e) {
-        logger.error(`[${req.headers[global.txnIdHeader]}] Error requesting Security service`, e);
-        throw e;
-    }
+	data = data.toString();
+	try {
+		const res = await secUtils.encryptText(req, app, data);
+		if (res.statusCode === 200) {
+			return {
+				value: res.body.data,
+				checksum: crypto.createHash('md5').update(data).digest('hex')
+			};
+		} else {
+			throw new Error('Error encrypting text');
+		}
+	} catch (e) {
+		logger.error(`[${req.headers[global.txnIdHeader]}] Error requesting Security service`, e);
+		throw e;
+	}
 }
 
 /**
@@ -38,21 +38,21 @@ async function encryptText(req, app, data) {
  * @param {*} data The data to decrypt
  */
 async function decryptText(req, app, data) {
-    if (!data) {
-        data = req;
-        req = undefined;
-    }
-    try {
-        const res = await secUtils.decryptText(req, app, data);
-        if (res.statusCode === 200) {
-            return res.body.data;
-        } else {
-            throw new Error('Error decrypting text');
-        }
-    } catch (e) {
-        logger.error(`[${req ? req.headers[global.txnIdHeader] : ''}] Error requesting Security service :: `, e.message ? e.message : (e.body ? e.body : e));
-        throw e;
-    }
+	if (!data) {
+		data = req;
+		req = undefined;
+	}
+	try {
+		const res = await secUtils.decryptText(req, app, data);
+		if (res.statusCode === 200) {
+			return res.body.data;
+		} else {
+			throw new Error('Error decrypting text');
+		}
+	} catch (e) {
+		logger.error(`[${req ? req.headers[global.txnIdHeader] : ''}] Error requesting Security service :: `, e.message ? e.message : (e.body ? e.body : e));
+		throw e;
+	}
 }
 
 // /**
@@ -142,59 +142,59 @@ async function decryptText(req, app, data) {
  * @param {string} address The details of user input to search for
  */
 async function getGeoDetails(req, path, address) {
-    address = typeof address === 'string' ? address : address.userInput;
-    const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${address}&key=${config.googleKey}`
-    const options = {
-        url,
-        method: 'GET',
-        responseType: 'json'
-    };
-    try {
-        const res = await httpClient.httpRequest(options);
-        if (!res) {
-            logger.error(`[${req.headers[global.txnIdHeader]}] Google API service is down`);
-            throw new Error('Google API service is down');
-        }
-        if (res.statusCode === 200) {
-            const body = res.body;
-            const geoObj = {};
-            geoObj.geometry = {};
-            geoObj.geometry.type = 'Point';
-            geoObj.userInput = address;
-            let aptLocation = null;
-            if (_.isEmpty(body.results[0])) {
-                return { key: path, geoObj: { userInput: address } };
-            } else {
-                aptLocation = !_.isEmpty(body.results) && !_.isEmpty(body.results[0]) ? body.results[0] : null;
-                const typeMapping = {
-                    'locality': 'town',
-                    'administrative_area_level_2': 'district',
-                    'administrative_area_level_1': 'state',
-                    'postal_code': 'pincode',
-                    'country': 'country'
-                };
-                if (aptLocation) {
-                    const addrComp = aptLocation.address_components;
-                    Object.keys(typeMapping).forEach(key => {
-                        const temp = addrComp.find(comp => comp.types && comp.types.indexOf(key) > -1);
-                        if (temp) geoObj[typeMapping[key]] = temp.long_name;
-                    });
-                    geoObj.geometry.coordinates = [aptLocation.geometry.location.lng, aptLocation.geometry.location.lat];
-                    geoObj.formattedAddress = aptLocation.formatted_address;
-                }
-                const resObj = {};
-                resObj.key = path;
-                resObj.geoObj = geoObj;
-                return resObj;
-            }
-        } else {
-            logger.error(`[${req.headers[global.txnIdHeader]}] Goolgle Maps API returned 400`, res.body.error_message);
-            return { key: path, geoObj: { userInput: address } };
-        }
-    } catch (e) {
-        logger.error(`[${req.headers[global.txnIdHeader]}] Error requesting Google Maps API :: `, e);
-        throw e;
-    }
+	address = typeof address === 'string' ? address : address.userInput;
+	const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${address}&key=${config.googleKey}`;
+	const options = {
+		url,
+		method: 'GET',
+		responseType: 'json'
+	};
+	try {
+		const res = await httpClient.httpRequest(options);
+		if (!res) {
+			logger.error(`[${req.headers[global.txnIdHeader]}] Google API service is down`);
+			throw new Error('Google API service is down');
+		}
+		if (res.statusCode === 200) {
+			const body = res.body;
+			const geoObj = {};
+			geoObj.geometry = {};
+			geoObj.geometry.type = 'Point';
+			geoObj.userInput = address;
+			let aptLocation = null;
+			if (_.isEmpty(body.results[0])) {
+				return { key: path, geoObj: { userInput: address } };
+			} else {
+				aptLocation = !_.isEmpty(body.results) && !_.isEmpty(body.results[0]) ? body.results[0] : null;
+				const typeMapping = {
+					'locality': 'town',
+					'administrative_area_level_2': 'district',
+					'administrative_area_level_1': 'state',
+					'postal_code': 'pincode',
+					'country': 'country'
+				};
+				if (aptLocation) {
+					const addrComp = aptLocation.address_components;
+					Object.keys(typeMapping).forEach(key => {
+						const temp = addrComp.find(comp => comp.types && comp.types.indexOf(key) > -1);
+						if (temp) geoObj[typeMapping[key]] = temp.long_name;
+					});
+					geoObj.geometry.coordinates = [aptLocation.geometry.location.lng, aptLocation.geometry.location.lat];
+					geoObj.formattedAddress = aptLocation.formatted_address;
+				}
+				const resObj = {};
+				resObj.key = path;
+				resObj.geoObj = geoObj;
+				return resObj;
+			}
+		} else {
+			logger.error(`[${req.headers[global.txnIdHeader]}] Goolgle Maps API returned 400`, res.body.error_message);
+			return { key: path, geoObj: { userInput: address } };
+		}
+	} catch (e) {
+		logger.error(`[${req.headers[global.txnIdHeader]}] Error requesting Google Maps API :: `, e);
+		throw e;
+	}
 }
 
 
@@ -211,33 +211,33 @@ async function getGeoDetails(req, path, address) {
  * @param {string} data.txnId The TxnId of the Request
  */
 function invokeHook(data) {
-    let timeout = (config.hookConnectionTimeout && parseInt(config.hookConnectionTimeout)) || 30;
-    data.payload.properties = data.payload.properties || commonUtils.generateProperties(data.txnId);
-    let headers = data.headers || commonUtils.generateHeaders(data.txnId);
-    headers['Content-Type'] = 'application/json';
-    headers['TxnId'] = data.txnId;
-    var options = {
-        url: data.hook.url,
-        method: 'POST',
-        headers: headers,
-        responseType: 'json',
-        json: data.payload,
-        timeout: timeout * 1000
-    };
-    if (typeof config.TLS_REJECT_UNAUTHORIZED === 'string' && config.TLS_REJECT_UNAUTHORIZED.toLowerCase() === 'false') {
-        options.insecure = true;
-        options.rejectUnauthorized = false;
-    }
-    return httpClient.httpRequest(options)
-        // .then(res => res)
-        .catch(err => {
-            logger.error(`Error requesting hook :: ${options.url} :: ${err.message}`);
-            const message = data.hook.failMessage ? data.hook.failMessage : `Pre-save "${data.hook.name}" down! Unable to proceed.`;
-            throw ({
-                message: message,
-                response: err.response
-            });
-        });
+	let timeout = (config.hookConnectionTimeout && parseInt(config.hookConnectionTimeout)) || 30;
+	data.payload.properties = data.payload.properties || commonUtils.generateProperties(data.txnId);
+	let headers = data.headers || commonUtils.generateHeaders(data.txnId);
+	headers['Content-Type'] = 'application/json';
+	headers['TxnId'] = data.txnId;
+	var options = {
+		url: data.hook.url,
+		method: 'POST',
+		headers: headers,
+		responseType: 'json',
+		json: data.payload,
+		timeout: timeout * 1000
+	};
+	if (typeof config.TLS_REJECT_UNAUTHORIZED === 'string' && config.TLS_REJECT_UNAUTHORIZED.toLowerCase() === 'false') {
+		options.insecure = true;
+		options.rejectUnauthorized = false;
+	}
+	return httpClient.httpRequest(options)
+	// .then(res => res)
+		.catch(err => {
+			logger.error(`Error requesting hook :: ${options.url} :: ${err.message}`);
+			const message = data.hook.failMessage ? data.hook.failMessage : `Pre-save "${data.hook.name}" down! Unable to proceed.`;
+			throw ({
+				message: message,
+				response: err.response
+			});
+		});
 }
 
 /**
@@ -253,57 +253,57 @@ function invokeHook(data) {
  * @param {string} data.txnId The TxnId of the Request
  */
 function invokeFunction(data, req) {
-    logger.info(`Invoking Function :: ${JSON.stringify(data.hook)}`)
-    let timeout = (config.hookConnectionTimeout && parseInt(config.hookConnectionTimeout)) || 30;
-    data.payload.properties = data.payload.properties || commonUtils.generateProperties(data.txnId);
-    let headers = data.headers || commonUtils.generateHeaders(data.txnId);
-    headers['Content-Type'] = 'application/json';
-    headers['TxnId'] = data.txnId;
-    headers['Authorization'] = req.headers['authorization'];
-    var options = {
-        url: config.baseUrlGW + data.hook.url,
-        method: 'POST',
-        headers: headers,
-        responseType: 'json',
-        json: data.payload,
-        timeout: timeout * 1000
-    };
-    if (typeof config.TLS_REJECT_UNAUTHORIZED === 'string' && config.TLS_REJECT_UNAUTHORIZED.toLowerCase() === 'false') {
-        options.insecure = true;
-        options.rejectUnauthorized = false;
-    }
-    return httpClient.httpRequest(options)
-        // .then(res => res)
-        .catch(err => {
-            logger.error(`Error requesting function :: ${options.url} :: ${err.message}`);
-            const message = data.hook.failMessage ? data.hook.failMessage : `Pre-save "${data.hook.name}" down! Unable to proceed.`;
-            throw ({
-                message: message,
-                response: err.response
-            });
-        });
+	logger.info(`Invoking Function :: ${JSON.stringify(data.hook)}`);
+	let timeout = (config.hookConnectionTimeout && parseInt(config.hookConnectionTimeout)) || 30;
+	data.payload.properties = data.payload.properties || commonUtils.generateProperties(data.txnId);
+	let headers = data.headers || commonUtils.generateHeaders(data.txnId);
+	headers['Content-Type'] = 'application/json';
+	headers['TxnId'] = data.txnId;
+	headers['Authorization'] = req.headers['authorization'];
+	var options = {
+		url: config.baseUrlGW + data.hook.url,
+		method: 'POST',
+		headers: headers,
+		responseType: 'json',
+		json: data.payload,
+		timeout: timeout * 1000
+	};
+	if (typeof config.TLS_REJECT_UNAUTHORIZED === 'string' && config.TLS_REJECT_UNAUTHORIZED.toLowerCase() === 'false') {
+		options.insecure = true;
+		options.rejectUnauthorized = false;
+	}
+	return httpClient.httpRequest(options)
+	// .then(res => res)
+		.catch(err => {
+			logger.error(`Error requesting function :: ${options.url} :: ${err.message}`);
+			const message = data.hook.failMessage ? data.hook.failMessage : `Pre-save "${data.hook.name}" down! Unable to proceed.`;
+			throw ({
+				message: message,
+				response: err.response
+			});
+		});
 }
 
 function mergeCustomizer(objValue, srcValue) {
-    if (_.isArray(objValue)) {
-        return srcValue;
-    }
+	if (_.isArray(objValue)) {
+		return srcValue;
+	}
 }
 
 function hasRelationCascadeData(data) {
-    if (!data) {
-        return false;
-    }
-    const keys = Object.keys(data);
-    return keys.filter(e => !e.startsWith('_')).length > 0;
+	if (!data) {
+		return false;
+	}
+	const keys = Object.keys(data);
+	return keys.filter(e => !e.startsWith('_')).length > 0;
 }
 
 module.exports = {
-    encryptText,
-    decryptText,
-    getGeoDetails,
-    invokeHook,
-    invokeFunction,
-    mergeCustomizer,
-    hasRelationCascadeData
-}
+	encryptText,
+	decryptText,
+	getGeoDetails,
+	invokeHook,
+	invokeFunction,
+	mergeCustomizer,
+	hasRelationCascadeData
+};
