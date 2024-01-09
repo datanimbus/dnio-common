@@ -148,7 +148,9 @@ function genrateCode(data) {
 	code.push('async function validateDateFields(req, newData, oldData) {');
 	code.push('\tlet txnId = req.headers[\'txnid\'];');
 	code.push('\tconst errors = {};');
-	parseSchemaForDateFields(schema);
+	if (!data.simpleDate) {
+		parseSchemaForDateFields(schema);
+	}
 	code.push('\treturn Object.keys(errors).length > 0 ? errors : null;');
 	code.push('}');
 	code.push('');
@@ -225,6 +227,7 @@ function genrateCode(data) {
 					code.push(`\t\t\t\t_.set(newData, '${path}', doc);`);
 					code.push('\t\t\t}');
 					code.push('\t\t} catch (e) {');
+					code.push('\t\t\tlogger.error(\'Error encrypting value ::\', e);');
 					code.push(`\t\t\terrors['${path}'] = e.message ? e.message : e;`);
 					code.push('\t\t}');
 					code.push('\t}');
@@ -244,6 +247,7 @@ function genrateCode(data) {
 						code.push('\t\t\t\t\t}');
 						code.push('\t\t\t\t}');
 						code.push('\t\t\t} catch (e) {');
+						code.push('\t\t\t\tlogger.error(\'Error encrypting value ::\', e);');
 						code.push(`\t\t\t\terrors['${path}.' + i] = e.message ? e.message : e;`);
 						code.push('\t\t\t}');
 						code.push('\t\t});');
@@ -278,6 +282,7 @@ function genrateCode(data) {
 					code.push(`\t\t\t${_.camelCase(path)} = ${_.camelCase(path)}.toFixed(${def.properties.precision});`);
 					code.push(`\t\t\t_.set(newData, '${path}', ${_.camelCase(path)});`);
 					code.push('\t} catch (e) {');
+					code.push('\t\tlogger.error(\'Error fixing precision ::\', e);');
 					code.push(`\t\terrors['${path}'] = e.message ? e.message : e;`);
 					code.push('\t}');
 				} else if (def.type == 'Object' && def.properties && !def.properties.schemaFree && !def.properties.dateType) {
@@ -291,6 +296,7 @@ function genrateCode(data) {
 						code.push(`\t\t\t\t\titem = item.toFixed(${def.definition[0].properties.precision});`);
 						code.push('\t\t\t\t\treturn item;');
 						code.push('\t\t\t} catch (e) {');
+						code.push('\t\t\t\tlogger.error(\'Error fixing precision ::\', e);');
 						code.push(`\t\t\t\terrors['${path}.' + i] = e.message ? e.message : e;`);
 						code.push('\t\t\t\treturn false;');
 						code.push('\t\t\t}');
@@ -333,6 +339,7 @@ function genrateCode(data) {
 					code.push('\t\t\t}');
 					code.push('\t\t}');
 					code.push('\t} catch (e) {');
+					code.push('\t\tlogger.error(\'Error fixing boolean value ::\', e);');
 					code.push(`\t\terrors['${path}'] = e.message ? e.message : e;`);
 					code.push('\t}');
 					// code.push(`\t_.set(newData, '${path}', ${_.camelCase(path)});`);
@@ -355,6 +362,7 @@ function genrateCode(data) {
 						code.push('\t\t\t\t\tthrow new Error(\'Invalid Boolean Value\');');
 						code.push('\t\t\t\t}');
 						code.push('\t\t\t} catch (e) {');
+						code.push('\t\t\t\tlogger.error(\'Error fixing boolean value ::\', e);');
 						code.push(`\t\t\t\terrors['${path}.' + i] = e.message ? e.message : e;`);
 						code.push('\t\t\t\treturn false;');
 						code.push('\t\t\t}');
@@ -458,6 +466,7 @@ function genrateCode(data) {
 					// _.set(newData, 'time', timeNew);
 					code.push(`\t\t\t_.set(newData, '${path}', ${_.camelCase(path)}New);`);
 					code.push('\t\t} catch (e) {');
+					code.push('\t\t\tlogger.error(\'Error Formatting Date :: \', e);');
 					code.push(`\t\t\terrors['${path}'] = e.message ? e.message : e;`);
 					code.push('\t\t}');
 					code.push('\t}');
