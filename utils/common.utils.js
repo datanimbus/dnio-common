@@ -1,6 +1,7 @@
 const crypto = require('crypto');
 const log4js = require('log4js');
 const _ = require('lodash');
+var moment = require('moment-timezone');
 
 const config = require('../config');
 const httpClient = require('../http-client');
@@ -321,6 +322,38 @@ function hasRelationCascadeData(data) {
 	return keys.filter(e => !e.startsWith('_')).length > 0;
 }
 
+function getFormattedDate(txnId, dateObj, defaultTimeZone, supportedTimeZones) {
+	if (_.isEmpty(dateObj)) return;
+	if (dateObj.rawData) {
+		if (dateObj.tzInfo && dateObj.tzInfo !== defaultTimeZone && supportedTimeZones.length && !supportedTimeZones.includes(dateObj.tzInfo))
+			throw new Error('Invalid timezone value ' + dateObj.tzInfo);
+		return formatDate(txnId, dateObj.rawData, dateObj.tzInfo || defaultTimeZone, false);
+	} else if (dateObj.unix) {
+		return formatDate(txnId, dateObj.unix, defaultTimeZone, true);
+	} else {
+		logger.error(`[${txnId}] Invalid dateObj in getFormattedDate :: `, dateObj);
+		throw new Error('Invalid date time value');
+	}
+}
+
+function formatDate(txnId, rawData, tzInfo, isUnix) {
+	try {
+		let parsedDate = new Date(rawData);
+		if (!tzInfo) tzInfo = global.defaultTimezone;
+		let dt = moment(parsedDate.toISOString());
+		return {
+			rawData: rawData.toString(),
+			tzData: dt.tz(tzInfo).format(),
+			tzInfo: tzInfo,
+			utc: dt.toISOString(),
+			unix: isUnix ? rawData : Date.parse(rawData)
+		};
+	} catch (e) {
+		logger.error(`[${txnId}] Invalid data in formatDate :: ${rawData} ${tzInfo} ${isUnix}`);
+		throw new Error('Invalid date time value');
+	}
+}
+
 module.exports = {
 	encryptText,
 	decryptText,
@@ -328,5 +361,6 @@ module.exports = {
 	invokeHook,
 	invokeFunction,
 	mergeCustomizer,
-	hasRelationCascadeData
+	hasRelationCascadeData,
+	getFormattedDate
 };

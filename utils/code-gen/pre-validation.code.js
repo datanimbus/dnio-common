@@ -148,7 +148,9 @@ function genrateCode(data) {
 	code.push('async function validateDateFields(req, newData, oldData) {');
 	code.push('\tlet txnId = req.headers[\'txnid\'];');
 	code.push('\tconst errors = {};');
-	parseSchemaForDateFields(schema);
+	if (!data.simpleDate) {
+		parseSchemaForDateFields(schema);
+	}
 	code.push('\treturn Object.keys(errors).length > 0 ? errors : null;');
 	code.push('}');
 	code.push('');
@@ -458,6 +460,7 @@ function genrateCode(data) {
 					// _.set(newData, 'time', timeNew);
 					code.push(`\t\t\t_.set(newData, '${path}', ${_.camelCase(path)}New);`);
 					code.push('\t\t} catch (e) {');
+					code.push('\t\t\tlogger.error(\'Error Formatting Date :: \', e);');
 					code.push(`\t\t\terrors['${path}'] = e.message ? e.message : e;`);
 					code.push('\t\t}');
 					code.push('\t}');

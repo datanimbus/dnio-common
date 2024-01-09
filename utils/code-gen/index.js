@@ -12,6 +12,7 @@ const transValidationCode = require('./trans-validation.code');
 const cascadeCode = require('./cascade.code');
 const schemaValidationCode = require('./schema-validation.code');
 const modelValidationCode = require('./model.code');
+const globalDefHelper = require('./globalDefinitionHelper');
 
 const logger = log4js.getLogger(global.loggerName);
 
@@ -34,6 +35,7 @@ async function generateCode(srvc, schemaValidator) {
 	removeOldFolder(srvc._id);
 	logger.info('New Version :: Generating Code');
 	mkdirp.sync(serviceFolder);
+	srvc['definition'] = globalDefHelper(srvc);
 	const schemaJSON = schemaUtils.convertToJSONSchema(srvc);
 	const schemaDefinition = definitionUtils.generateDefinition(srvc);
 	schemaValidator.removeSchema(srvc._id);
